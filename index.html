@@ -1,112 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BroCycle - Cycle Phases</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BroCycle</title>
   <style>
     body {
-      background-color: #001f3f;
-      color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
+      background-color: #001f3f;
+      color: #ffffff;
     }
-    h1 {
+    h1, h2 {
       color: #7FDBFF;
     }
-    .phase {
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 300px;
+      display: block;
+    }
+    button {
+      background-color: #0074D9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .tip, .info {
+      margin-top: 20px;
       background-color: #003366;
       padding: 15px;
-      margin: 10px 0;
       border-radius: 8px;
+      max-width: 400px;
     }
-    .timeline {
-      display: flex;
-      margin-top: 20px;
-      height: 40px;
-      border-radius: 6px;
-      overflow: hidden;
-      max-width: 600px;
-    }
-    .block {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      color: black;
-    }
-    .menstrual { background-color: #FF4136; }
-    .follicular { background-color: #0074D9; }
-    .ovulation { background-color: #2ECC40; }
-    .luteal { background-color: #FF851B; }
-    a {
-      color: #7FDBFF;
-      text-decoration: underline;
+    a.graph-link {
       display: inline-block;
       margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #0074D9;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <h1>Cycle Phases: What You're Dealing With</h1>
-  <p id="summary">Each phase hits different. Use this guide to stay sharp.</p>
+  <h1>BroCycle</h1>
+  <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
 
-  <div class="phase" id="phase1"></div>
-  <div class="phase" id="phase2"></div>
-  <div class="phase" id="phase3"></div>
-  <div class="phase" id="phase4"></div>
+  <h2>Track Her Cycle</h2>
+  <label>Her name:</label>
+  <input type="text" id="partnerName" placeholder="e.g. Sarah" />
 
-  <div class="timeline" id="timeline"></div>
+  <label>Date of last period:</label>
+  <input type="date" id="lastPeriod" />
 
-  <a href="index.html">← Back to Tracker</a>
+  <label>Average cycle length (days):</label>
+  <input type="number" id="cycleLength" placeholder="e.g. 28" />
+
+  <label>Period duration (days):</label>
+  <input type="number" id="periodLength" placeholder="e.g. 5" />
+
+  <button onclick="goToResults()">Predict Next Period</button>
+
+  <div class="tip" id="broTip"></div>
+
+  <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
+  <a class="graph-link" href="history.html">View History</a>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const length = parseInt(params.get("length")) || 28;
-    const periodLength = parseInt(params.get("period")) || 5;
+    function goToResults() {
+      const name = document.getElementById("partnerName").value;
+      const last = new Date(document.getElementById("lastPeriod").value);
+      const cycleLength = parseInt(document.getElementById("cycleLength").value);
+      const periodLength = parseInt(document.getElementById("periodLength").value);
 
-    const ovulationDay = Math.round(length * 0.5);
-    const follicularLength = ovulationDay - periodLength;
-    const lutealLength = length - (ovulationDay + 1) + 1;
+      if (!name || isNaN(last.getTime()) || isNaN(cycleLength) || isNaN(periodLength)) {
+        alert("Fill it out properly, bro.");
+        return;
+      }
 
-    document.getElementById("phase1").innerHTML = `
-      <strong>1. Pain Zone (Days 1–${periodLength}):</strong><br>
-      Low energy. Cramps. Mood swings. Be useful or disappear.`;
+      const next = new Date(last);
+      next.setDate(next.getDate() + cycleLength);
 
-    document.getElementById("phase2").innerHTML = `
-      <strong>2. Chill Build-up (Days ${periodLength + 1}–${ovulationDay - 1}):</strong><br>
-      Energy rises. She's more upbeat. Good time to plan stuff.`;
+      const today = new Date();
+      const timeDiff = next - today;
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-    document.getElementById("phase3").innerHTML = `
-      <strong>3. Green Light Zone (Day ${ovulationDay}):</strong><br>
-      She's confident, sharp, maybe even in the mood. Don’t screw it up.`;
+      const entry = {
+        name,
+        lastPeriod: last.toISOString().split('T')[0],
+        cycleLength,
+        periodLength,
+        predictedNext: next.toISOString().split('T')[0],
+        created: new Date().toISOString()
+      };
+      let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+      history.push(entry);
+      localStorage.setItem("brocycleHistory", JSON.stringify(history));
 
-    document.getElementById("phase4").innerHTML = `
-      <strong>4. Landmine Phase (Days ${ovulationDay + 1}–${length}):</strong><br>
-      PMS incoming. Mood shifts, cravings. Be chill and bring snacks.`;
+      const params = new URLSearchParams({
+        name: name,
+        next: next.toISOString(),
+        days: daysRemaining,
+        length: cycleLength,
+        period: periodLength
+      });
 
-    // Create dynamic timeline
-    const timeline = document.getElementById("timeline");
+      window.location.href = `results.html?${params.toString()}`;
+    }
 
-    const total = periodLength + follicularLength + 1 + lutealLength;
-    const scale = 100 / total;
-
-    const blocks = [
-      { label: "Pain", len: periodLength, class: "menstrual" },
-      { label: "Build", len: follicularLength, class: "follicular" },
-      { label: "Ovul", len: 1, class: "ovulation" },
-      { label: "PMS", len: lutealLength, class: "luteal" }
+    const tips = [
+      "Don't ask 'are you on your period?' Just be useful.",
+      "Surprise her with snacks or a heating pad.",
+      "Mood shifts? Stay calm and ride it out.",
+      "Sometimes silence is the win.",
+      "Support means knowing when to shut up."
     ];
 
-    blocks.forEach(block => {
-      const div = document.createElement("div");
-      div.className = `block ${block.class}`;
-      div.style.width = `${block.len * scale}%`;
-      div.textContent = block.label;
-      timeline.appendChild(div);
-    });
+    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
 </html>
