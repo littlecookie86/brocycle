@@ -88,9 +88,10 @@
     const periodLength = parseInt(params.get("period")) || 5;
 
     const ovulationDay = 14;
+    const peakLength = 2;
     const follicularEnd = ovulationDay - 1;
     const follicularLength = follicularEnd - periodLength;
-    const lutealStart = ovulationDay + 1;
+    const lutealStart = ovulationDay + peakLength;
     const lutealLength = cycleLength - lutealStart + 1;
 
     document.getElementById("phase1").innerHTML = `
@@ -102,8 +103,8 @@
       She's recharging. Energy goes up, mind clears. Solid time for chill plans.`;
 
     document.getElementById("phase3").innerHTML = `
-      <strong>3. Peak Mode (Day ${ovulationDay}):</strong><br>
-      Best mood, top energy, confidence up. Want to connect? This is the day.`;
+      <strong>3. Peak Mode (Days ${ovulationDay}–${ovulationDay + 1}):</strong><br>
+      She might be horny, she might be annoyed — or both. Be ready, but don’t be dumb.`;
 
     document.getElementById("phase4").innerHTML = `
       <strong>4. Trap Zone (Days ${lutealStart}–${cycleLength}):</strong><br>
@@ -111,13 +112,13 @@
 
     const bar = document.getElementById("barChart");
 
-    const total = periodLength + follicularLength + 1 + lutealLength;
+    const total = periodLength + follicularLength + peakLength + lutealLength;
     const scale = 100 / total;
 
     const blocks = [
       { label: "Pain", len: periodLength, class: "menstrual", start: 1 },
       { label: "Recharge", len: follicularLength, class: "follicular", start: periodLength + 1 },
-      { label: "Peak", len: 1, class: "ovulation", start: ovulationDay },
+      { label: "Peak", len: peakLength, class: "ovulation", start: ovulationDay },
       { label: "Trap", len: lutealLength, class: "luteal", start: lutealStart }
     ];
 
