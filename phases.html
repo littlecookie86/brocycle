@@ -36,30 +36,40 @@
 </head>
 <body>
   <h1>Cycle Phases Explained</h1>
-  <p>Here's a quick guide so you know what's going on during the cycle. It's science, bro.</p>
+  <p id="summary">Here's a quick guide so you know what's going on during the cycle. It's science, bro.</p>
 
-  <div class="phase">
-    <strong>1. Menstrual Phase (Days 1–5):</strong><br>
-    Period starts. Hormones are low. She might feel tired, sore, or cranky. Be chill.
-  </div>
-
-  <div class="phase">
-    <strong>2. Follicular Phase (Days 1–13):</strong><br>
-    Body starts preparing for ovulation. Energy and mood often improve. Good time for plans.
-  </div>
-
-  <div class="phase">
-    <strong>3. Ovulation (Day 14-ish):</strong><br>
-    Estrogen peaks. She might feel her best here. Flirty, fun, confident. Peak time.
-  </div>
-
-  <div class="phase">
-    <strong>4. Luteal Phase (Days 15–28):</strong><br>
-    Progesterone rises. PMS may kick in. Cramps, cravings, and emotional waves possible.
-  </div>
+  <div class="phase" id="phase1"></div>
+  <div class="phase" id="phase2"></div>
+  <div class="phase" id="phase3"></div>
+  <div class="phase" id="phase4"></div>
 
   <img src="https://www.nichd.nih.gov/sites/default/files/styles/full_width/public/2022-10/MenstrualCycle_0.png" alt="Cycle Graph">
 
   <a href="index.html">← Back to Tracker</a>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const length = parseInt(params.get("length")) || 28;
+
+    const ovulationDay = Math.round(length * 0.5);
+    const lutealStart = ovulationDay + 1;
+    const lutealLength = length - lutealStart + 1;
+
+    document.getElementById("phase1").innerHTML = `
+      <strong>1. Menstrual Phase (Days 1–5):</strong><br>
+      Period starts. Hormones are low. She might feel tired, sore, or cranky. Be chill.`;
+
+    document.getElementById("phase2").innerHTML = `
+      <strong>2. Follicular Phase (Days 1–${ovulationDay - 1}):</strong><br>
+      Body starts preparing for ovulation. Energy and mood often improve. Good time for plans.`;
+
+    document.getElementById("phase3").innerHTML = `
+      <strong>3. Ovulation (Day ${ovulationDay}):</strong><br>
+      Estrogen peaks. She might feel her best here. Flirty, fun, confident. Peak time.`;
+
+    document.getElementById("phase4").innerHTML = `
+      <strong>4. Luteal Phase (Days ${lutealStart}–${length}):</strong><br>
+      Progesterone rises. PMS may kick in. Cramps, cravings, and emotional waves possible.`;
+  </script>
 </body>
 </html>
