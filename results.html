@@ -50,6 +50,14 @@
   </div>
 
   <script>
+    function formatDateDisplay(dateStr) {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear()).slice(-2);
+      return `${day}.${month}.${year}`;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const name = params.get("name");
     const next = params.get("next");
@@ -69,11 +77,12 @@
     }
 
     if (name && next && days && length && period) {
+      const predicted = formatDateDisplay(next);
       const phase = getPhase(length, period, new Date(next) - length * 24 * 60 * 60 * 1000);
       document.getElementById("results").innerHTML = `
         <p><strong>${name}'s</strong> cycle is around <strong>${length} days</strong> long.</p>
         <p>Her period usually lasts <strong>${period} days</strong>.</p>
-        <p>Based on your last entry, her next period might start around <strong>${new Date(next).toDateString()}</strong>.</p>
+        <p>Based on your last entry, her next period might start around <strong>${predicted}</strong>.</p>
         <p>Countdown: <strong>${days} day(s)</strong> to go. You know what to do.</p>
         <p>Today = <strong>${phase}</strong></p>
       `;
