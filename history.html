@@ -53,16 +53,23 @@
       }
 
       history.reverse().forEach(entry => {
+        const name = entry.name || "(no name)";
+        const lastPeriod = entry.lastPeriod || "-";
+        const cycleLength = entry.cycleLength || "-";
+        const periodLength = entry.periodLength || "-";
+        const predictedNext = entry.predictedNext || "-";
+        const created = entry.created || "-";
+
         const box = document.createElement("div");
         box.className = "entry";
         box.innerHTML = `
-          <strong>${entry.name}</strong><br>
-          Last Period: ${entry.lastPeriod}<br>
-          Cycle Length: ${entry.cycleLength} days<br>
-          Period Length: ${entry.periodLength} days<br>
-          Predicted Next: ${entry.predictedNext}<br>
-          Logged: ${entry.created}<br>
-          <a href="phases.html?length=${entry.cycleLength}&period=${entry.periodLength}" style="color:#39CCCC">See Phases</a>
+          <strong>${name}</strong><br>
+          Last Period: ${lastPeriod}<br>
+          Cycle Length: ${cycleLength} days<br>
+          Period Length: ${periodLength} days<br>
+          Predicted Next: ${predictedNext}<br>
+          Logged: ${created}<br>
+          <a href="phases.html?length=${cycleLength}&period=${periodLength}" style="color:#39CCCC">See Phases</a>
         `;
         container.appendChild(box);
       });
