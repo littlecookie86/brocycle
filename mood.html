@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BroCycle - Mood Map</title>
+  <style>
+    body {
+      background-color: #001f3f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #7FDBFF;
+    }
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .legend span {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .map {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .day {
+      width: 32px;
+      height: 32px;
+      font-size: 10px;
+      text-align: center;
+      line-height: 32px;
+      border-radius: 4px;
+    }
+    .hell { background-color: #FF4136; }
+    .calm { background-color: #0074D9; }
+    .green { background-color: #2ECC40; }
+    .alert { background-color: #FF851B; }
+  </style>
+</head>
+<body>
+  <h1>Mood Map (Next 3 Months)</h1>
+  <div class="legend">
+    <span class="hell">Day 1 Hell</span>
+    <span class="calm">Calm Phase</span>
+    <span class="green">Green Light</span>
+    <span class="alert">Stay Alert</span>
+  </div>
+  <div class="map" id="map"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const length = parseInt(params.get("length")) || 28;
+    const period = parseInt(params.get("period")) || 5;
+    const last = new Date(params.get("last"));
+
+    function getPhase(day, start, cycle, period) {
+      const daysSince = Math.floor((day - start) / (1000 * 60 * 60 * 24)) % cycle;
+      if (daysSince < 0) return null;
+      if (daysSince < period) return "hell";
+      else if (daysSince < 14) return "calm";
+      else if (daysSince < 16) return "green";
+      else return "alert";
+    }
+
+    const container = document.getElementById("map");
+    const today = new Date();
+    const totalDays = 90;
+
+    for (let i = 0; i < totalDays; i++) {
+      const day = new Date();
+      day.setDate(today.getDate() + i);
+      const label = day.getDate();
+      const phase = getPhase(day, last, length, period);
+
+      const div = document.createElement("div");
+      div.className = `day ${phase}`;
+      div.title = day.toDateString();
+      div.innerText = label;
+      container.appendChild(div);
+    }
+  </script>
+</body>
+</html>
