@@ -91,9 +91,10 @@
 
     <div class="advanced-section" id="advanced">
       <h3>Advanced Input</h3>
+      <p>Enter multiple period start dates (most recent first):</p>
       <div id="entries"></div>
-      <button onclick="addAdvancedEntry()">+ Add Another Entry</button>
-      <button onclick="calculateFromAdvanced()">Estimate from Entries</button>
+      <button onclick="addAdvancedEntry()">+ Add Another Date</button>
+      <button onclick="calculateFromAdvanced()">Estimate from Dates</button>
     </div>
 
     <div class="tip" id="broTip"></div>
@@ -152,31 +153,33 @@
       const entriesDiv = document.getElementById("entries");
       const group = document.createElement("div");
       group.className = "entry-group";
-      group.innerHTML = `
-        <input type="date" placeholder="Date" />
-        <input type="number" placeholder="Cycle" />
-        <input type="number" placeholder="Period" />
-      `;
+      group.innerHTML = `<input type="date" placeholder="Period Start Date" />`;
       entriesDiv.appendChild(group);
     }
 
     function calculateFromAdvanced() {
-      const rows = document.querySelectorAll(".entry-group");
-      let cycleSum = 0, periodSum = 0, count = 0;
-      rows.forEach(row => {
-        const inputs = row.querySelectorAll("input");
-        const c = parseInt(inputs[1].value);
-        const p = parseInt(inputs[2].value);
-        if (!isNaN(c)) cycleSum += c;
-        if (!isNaN(p)) periodSum += p;
-        if (!isNaN(c) || !isNaN(p)) count++;
-      });
-      if (count === 0) {
-        alert("Add at least one complete row, bro.");
+      const rows = document.querySelectorAll(".entry-group input");
+      const dates = Array.from(rows)
+        .map(input => new Date(input.value))
+        .filter(date => !isNaN(date.getTime()))
+        .sort((a, b) => b - a); // most recent first
+
+      if (dates.length < 2) {
+        alert("Enter at least 2 valid dates, bro.");
         return;
       }
-      document.getElementById("cycleLength").value = Math.round(cycleSum / count);
-      document.getElementById("periodLength").value = Math.round(periodSum / count);
+
+      let totalCycle = 0;
+      for (let i = 0; i < dates.length - 1; i++) {
+        const diff = (dates[i] - dates[i + 1]) / (1000 * 60 * 60 * 24);
+        totalCycle += diff;
+      }
+      const avgCycle = Math.round(totalCycle / (dates.length - 1));
+
+      document.getElementById("cycleLength").value = avgCycle;
+      document.getElementById("lastPeriod").value = dates[0].toISOString().split('T')[0];
+
+      alert(`Average cycle length: ${avgCycle} days based on your entries.`);
     }
 
     const tips = [
