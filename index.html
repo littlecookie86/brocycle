@@ -88,7 +88,7 @@
     <input type="text" id="partnerName" placeholder="e.g. Sarah" />
 
     <label>Date of last period:</label>
-    <input type="date" id="lastPeriod" />
+    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" />
 
     <div class="known-periods" id="advanced">
       <label>Known periods:</label>
@@ -112,6 +112,17 @@
   <div class="corner-note">initial version of BroCycle website</div>
 
   <script>
+    function parseDDMMYY(input) {
+      const parts = input.split(".");
+      if (parts.length !== 3) return null;
+      const day = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1;
+      const year = parseInt(parts[2]);
+      const fullYear = year + (year < 50 ? 2000 : 1900);
+      const d = new Date(fullYear, month, day);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
     function formatDateDisplay(date) {
       const d = new Date(date);
       const day = String(d.getDate()).padStart(2, '0');
@@ -124,16 +135,17 @@
       const name = document.getElementById("partnerName").value;
       const cycleLength = parseInt(document.getElementById("cycleLength").value);
       const periodLength = parseInt(document.getElementById("periodLength").value);
-      let allDates = [document.getElementById("lastPeriod").value];
+
+      let allDates = [parseDDMMYY(document.getElementById("lastPeriod").value)];
 
       const rows = document.querySelectorAll(".date-entry input");
       rows.forEach(input => {
-        if (input.value) allDates.push(input.value);
+        const d = parseDDMMYY(input.value);
+        if (d) allDates.push(d);
       });
 
       const validDates = allDates
-        .map(val => new Date(val))
-        .filter(d => !isNaN(d.getTime()))
+        .filter(d => d && !isNaN(d.getTime()))
         .sort((a, b) => b - a);
 
       if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
@@ -185,7 +197,7 @@
       const container = document.getElementById("entries");
       const row = document.createElement("div");
       row.className = "date-entry";
-      row.innerHTML = `<input type="date" placeholder="yyyy-mm-dd">`;
+      row.innerHTML = `<input type="text" placeholder="dd.mm.yy">`;
       container.appendChild(row);
     }
 
