@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BroCycle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #001f3f;
+      color: #ffffff;
+    }
+    h1, h2 {
+      color: #7FDBFF;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 300px;
+      display: block;
+    }
+    button {
+      background-color: #0074D9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .tip, .info {
+      margin-top: 20px;
+      background-color: #003366;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+    a.graph-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #0074D9;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>BroCycle</h1>
+  <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
+
+  <h2>Track Her Cycle</h2>
+  <label>Her name:</label>
+  <input type="text" id="partnerName" placeholder="e.g. Sarah" />
+
+  <label>Date of last period:</label>
+  <input type="date" id="lastPeriod" />
+
+  <label>Average cycle length (days):</label>
+  <input type="number" id="cycleLength" placeholder="e.g. 28" />
+
+  <button onclick="goToResults()">Predict Next Period</button>
+
+  <div class="tip" id="broTip"></div>
+
+  <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
+
+  <script>
+    function goToResults() {
+      const name = document.getElementById("partnerName").value;
+      const last = new Date(document.getElementById("lastPeriod").value);
+      const length = parseInt(document.getElementById("cycleLength").value);
+
+      if (!name || isNaN(last.getTime()) || isNaN(length)) {
+        alert("Please fill out all fields, bro.");
+        return;
+      }
+
+      const next = new Date(last);
+      next.setDate(next.getDate() + length);
+
+      const today = new Date();
+      const timeDiff = next - today;
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      const params = new URLSearchParams({
+        name: name,
+        next: next.toISOString(),
+        days: daysRemaining,
+        length: length
+      });
+
+      window.location.href = `results.html?${params.toString()}`;
+    }
+
+    const tips = [
+      "Don't ask 'are you on your period?' Just be nice.",
+      "Surprise her with chocolate or a warm tea.",
+      "PMS is real. Don’t take mood swings personally.",
+      "Sometimes silence is the best gift.",
+      "Don't be a hero. Just offer a heating pad."
+    ];
+
+    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
+  </script>
+</body>
+</html>
