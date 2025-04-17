@@ -25,6 +25,15 @@
       border-radius: 4px;
       font-size: 14px;
     }
+    .month-section {
+      margin-bottom: 25px;
+    }
+    .month-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: #FFDC00;
+    }
     .map {
       display: flex;
       flex-wrap: wrap;
@@ -52,7 +61,7 @@
     <span class="green">Green Light</span>
     <span class="alert">Stay Alert</span>
   </div>
-  <div class="map" id="map"></div>
+  <div id="map"></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -69,9 +78,15 @@
       else return "alert";
     }
 
+    function getMonthName(date) {
+      return date.toLocaleString('default', { month: 'long' });
+    }
+
     const container = document.getElementById("map");
     const today = new Date();
     const totalDays = 90;
+    let currentMonth = "";
+    let monthSection = null;
 
     for (let i = 0; i < totalDays; i++) {
       const day = new Date();
@@ -79,11 +94,30 @@
       const label = day.getDate();
       const phase = getPhase(day, last, length, period);
 
+      const monthName = getMonthName(day) + " " + day.getFullYear();
+      if (monthName !== currentMonth) {
+        currentMonth = monthName;
+        monthSection = document.createElement("div");
+        monthSection.className = "month-section";
+
+        const title = document.createElement("div");
+        title.className = "month-title";
+        title.innerText = monthName;
+
+        const map = document.createElement("div");
+        map.className = "map";
+        map.id = `map-${i}`;
+
+        monthSection.appendChild(title);
+        monthSection.appendChild(map);
+        container.appendChild(monthSection);
+      }
+
       const div = document.createElement("div");
       div.className = `day ${phase}`;
       div.title = day.toDateString();
       div.innerText = label;
-      container.appendChild(div);
+      document.getElementById(`map-${i}`).appendChild(div);
     }
   </script>
 </body>
