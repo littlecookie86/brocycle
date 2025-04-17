@@ -26,17 +26,6 @@
       margin-top: 20px;
       max-width: 700px;
     }
-    .labels {
-      display: flex;
-      flex-wrap: wrap;
-      font-size: 12px;
-      margin-bottom: 5px;
-    }
-    .labels span {
-      flex: 1;
-      text-align: center;
-      min-width: 30px;
-    }
     .bar {
       display: flex;
       height: 40px;
@@ -49,6 +38,21 @@
       justify-content: center;
       font-size: 11px;
       font-weight: bold;
+      color: black;
+      position: relative;
+    }
+    .label-start {
+      position: absolute;
+      left: 4px;
+      top: 2px;
+      font-size: 10px;
+      color: black;
+    }
+    .label-end {
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      font-size: 10px;
       color: black;
     }
     .menstrual { background-color: #FF4136; }
@@ -73,7 +77,6 @@
   <div class="phase" id="phase4"></div>
 
   <div class="timeline">
-    <div class="labels" id="dayLabels"></div>
     <div class="bar" id="barChart"></div>
   </div>
 
@@ -107,35 +110,28 @@
       Hormones flip. Cravings, mood swings. Stay cool, don’t escalate anything.`;
 
     const bar = document.getElementById("barChart");
-    const labels = document.getElementById("dayLabels");
 
     const total = periodLength + follicularLength + 1 + lutealLength;
     const scale = 100 / total;
 
     const blocks = [
-      { label: "Pain", len: periodLength, class: "menstrual" },
-      { label: "Recharge", len: follicularLength, class: "follicular" },
-      { label: "Peak", len: 1, class: "ovulation" },
-      { label: "Trap", len: lutealLength, class: "luteal" }
+      { label: "Pain", len: periodLength, class: "menstrual", start: 1 },
+      { label: "Recharge", len: follicularLength, class: "follicular", start: periodLength + 1 },
+      { label: "Peak", len: 1, class: "ovulation", start: ovulationDay },
+      { label: "Trap", len: lutealLength, class: "luteal", start: lutealStart }
     ];
 
-    let dayCounter = 1;
-
-    // timeline bars
-    blocks.forEach(block => {
+    blocks.forEach((block, i) => {
       const div = document.createElement("div");
       div.className = `block ${block.class}`;
       div.style.width = `${block.len * scale}%`;
-      div.textContent = block.label;
+      div.innerHTML = `
+        <div class="label-start">Day ${block.start}</div>
+        ${block.label}
+        ${i === blocks.length - 1 ? `<div class="label-end">Day ${cycleLength}</div>` : ''}
+      `;
       bar.appendChild(div);
     });
-
-    // show day labels across the whole cycle
-    for (let i = 1; i <= cycleLength; i++) {
-      const span = document.createElement("span");
-      span.textContent = `Day ${i}`;
-      labels.appendChild(span);
-    }
   </script>
 </body>
 </html>
