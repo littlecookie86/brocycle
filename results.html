@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,46 +10,72 @@
       color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .popup {
+      background-color: #003366;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px black;
+      text-align: center;
+      max-width: 90%;
     }
     h1 {
       color: #7FDBFF;
+      margin-bottom: 15px;
     }
-    .box {
-      background-color: #003366;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 8px;
+    p {
+      margin: 10px 0;
     }
-    a {
-      color: #7FDBFF;
+    a.button-link {
       display: inline-block;
-      margin-top: 20px;
-      text-decoration: underline;
+      margin: 10px 5px;
+      padding: 10px 15px;
+      background-color: #0074D9;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <h1>BroCycle Results</h1>
-  <div class="box">
+  <div class="popup" id="resultBox">
+    <h1>🔥 Prediction Summary</h1>
     <div id="results"></div>
+    <a class="button-link" href="phases.html" id="phaseLink">View Cycle Phases</a>
+    <a class="button-link" href="index.html">Start Over</a>
   </div>
-  <a href="index.html">← Back to Tracker</a>
-  <a href="phases.html" id="phaseLink">View Cycle Phases</a>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const name = params.get("name");
     const next = params.get("next");
     const days = params.get("days");
-    const length = params.get("length");
-    const period = params.get("period");
+    const length = parseInt(params.get("length"));
+    const period = parseInt(params.get("period"));
+
+    function getPhase(cycleLength, periodLength, startDate) {
+      const today = new Date();
+      const start = new Date(startDate);
+      const daysSince = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
+
+      if (daysSince < periodLength) return "Pain Zone";
+      else if (daysSince < 14) return "Recharge Phase";
+      else if (daysSince === 14) return "Peak Mode";
+      else return "Trap Zone";
+    }
 
     if (name && next && days && length && period) {
+      const phase = getPhase(length, period, new Date(next) - length * 24 * 60 * 60 * 1000);
       document.getElementById("results").innerHTML = `
         <p><strong>${name}'s</strong> cycle is around <strong>${length} days</strong> long.</p>
         <p>Her period usually lasts <strong>${period} days</strong>.</p>
         <p>Based on your last entry, her next period might start around <strong>${new Date(next).toDateString()}</strong>.</p>
         <p>Countdown: <strong>${days} day(s)</strong> to go. You know what to do.</p>
+        <p>Today = <strong>${phase}</strong></p>
       `;
       document.getElementById("phaseLink").href = `phases.html?length=${length}&period=${period}`;
     } else {
