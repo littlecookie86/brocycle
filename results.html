@@ -47,6 +47,7 @@
     <div id="results"></div>
     <a class="button-link" href="phases.html" id="phaseLink">View Cycle Phases</a>
     <a class="button-link" href="index.html">Start Over</a>
+    <a class="button-link" href="#" id="moodMapLink">See Mood Map</a>
   </div>
 
   <script>
@@ -102,6 +103,7 @@
         <p>Today = <strong>${phase}</strong></p>
       `;
       document.getElementById("phaseLink").href = `phases.html?length=${length}&period=${period}`;
+      document.getElementById("moodMapLink").href = `mood.html?length=${length}&period=${period}&last=${lastStart.toISOString().split('T')[0]}`;
     } else {
       document.getElementById("results").innerText = "Missing info. Go back and fill it in, bro.";
     }
