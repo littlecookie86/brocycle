@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BroCycle - History</title>
+  <style>
+    body {
+      background-color: #001f3f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #7FDBFF;
+    }
+    .entry {
+      background-color: #003366;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #FF4136;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    a {
+      color: #7FDBFF;
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle History</h1>
+  <div id="history"></div>
+  <button onclick="clearHistory()">Clear All</button>
+  <a href="index.html">← Back to Tracker</a>
+
+  <script>
+    function displayHistory() {
+      const container = document.getElementById("history");
+      const history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+      if (history.length === 0) {
+        container.innerHTML = "No history yet, bro.";
+        return;
+      }
+
+      history.reverse().forEach(entry => {
+        const box = document.createElement("div");
+        box.className = "entry";
+        box.innerHTML = `
+          <strong>${entry.name}</strong><br>
+          Last Period: ${entry.lastPeriod}<br>
+          Cycle Length: ${entry.cycleLength} days<br>
+          Period Length: ${entry.periodLength} days<br>
+          Predicted Next: ${entry.predictedNext}<br>
+          Logged: ${new Date(entry.created).toLocaleDateString()}
+        `;
+        container.appendChild(box);
+      });
+    }
+
+    function clearHistory() {
+      if (confirm("You sure you want to wipe it all, bro?")) {
+        localStorage.removeItem("brocycleHistory");
+        location.reload();
+      }
+    }
+
+    displayHistory();
+  </script>
+</body>
+</html>
