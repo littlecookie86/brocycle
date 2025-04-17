@@ -1,95 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BroCycle - Results</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BroCycle</title>
   <style>
     body {
-      background-color: #001f3f;
-      color: white;
-      font-family: Arial, sans-serif;
-      padding: 20px;
+      margin: 0;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       min-height: 100vh;
+      background-color: #001f3f;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
     }
-    .popup {
-      background-color: #003366;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px black;
-      text-align: center;
-      max-width: 90%;
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
     }
-    h1 {
+    h1, h2 {
       color: #7FDBFF;
-      margin-bottom: 15px;
     }
-    p {
-      margin: 10px 0;
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 100%;
+      display: block;
     }
-    a.button-link {
+    button {
+      background-color: #0074D9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .tip {
+      margin-top: 20px;
+      background-color: #003366;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    a.graph-link {
       display: inline-block;
-      margin: 10px 5px;
+      margin-top: 20px;
       padding: 10px 15px;
       background-color: #0074D9;
       color: white;
-      border-radius: 6px;
       text-decoration: none;
+      border-radius: 6px;
+    }
+    .corner-note {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 12px;
+      color: #AAAAAA;
+    }
+    .known-periods {
+      background-color: #002244;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+    }
+    .known-periods label {
+      margin-bottom: 4px;
+      display: block;
+    }
+    .date-entry {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .date-entry input {
+      flex: 1;
     }
   </style>
 </head>
 <body>
-  <div class="popup" id="resultBox">
-    <h1>🔥 Prediction Summary</h1>
-    <div id="results"></div>
-    <a class="button-link" href="phases.html" id="phaseLink">View Cycle Phases</a>
-    <a class="button-link" href="index.html">Start Over</a>
+  <div class="container">
+    <h1>BroCycle</h1>
+    <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
+
+    <h2>Track Her Cycle</h2>
+    <label>Her name:</label>
+    <input type="text" id="partnerName" placeholder="e.g. Sarah" />
+
+    <label>Date of last period:</label>
+    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" />
+
+    <div class="known-periods" id="advanced">
+      <label>Known periods:</label>
+      <div id="entries"></div>
+      <button onclick="addKnownDate()">+ Add Another Date</button>
+    </div>
+
+    <label>Average cycle length (days):</label>
+    <input type="number" id="cycleLength" placeholder="e.g. 28" />
+
+    <label>Period duration (days):</label>
+    <input type="number" id="periodLength" placeholder="e.g. 5" />
+
+    <button onclick="goToResults()">Predict Next Period</button>
+
+    <div class="tip" id="broTip"></div>
+    <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
+    <a class="graph-link" href="history.html">View History</a>
   </div>
 
+  <div class="corner-note">initial version of BroCycle website</div>
+
   <script>
-    function formatDateDisplay(dateStr) {
-      const d = new Date(dateStr);
+    function parseDDMMYY(input) {
+      const parts = input.split(".");
+      if (parts.length !== 3) return null;
+      const day = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1;
+      const year = parseInt(parts[2]);
+      const fullYear = year + (year < 50 ? 2000 : 1900);
+      const d = new Date(fullYear, month, day);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatDateDisplay(date) {
+      const d = new Date(date);
       const day = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = String(d.getFullYear()).slice(-2);
       return `${day}.${month}.${year}`;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const name = params.get("name");
-    const next = params.get("next");
-    const days = params.get("days");
-    const length = parseInt(params.get("length"));
-    const period = parseInt(params.get("period"));
+    function goToResults() {
+      const name = document.getElementById("partnerName").value;
+      const cycleLength = parseInt(document.getElementById("cycleLength").value);
+      const periodLength = parseInt(document.getElementById("periodLength").value);
 
-    function getPhase(cycleLength, periodLength, startDate) {
+      let allDates = [parseDDMMYY(document.getElementById("lastPeriod").value)];
+
+      const rows = document.querySelectorAll(".date-entry input");
+      rows.forEach(input => {
+        const d = parseDDMMYY(input.value);
+        if (d) allDates.push(d);
+      });
+
+      const validDates = allDates
+        .filter(d => d && !isNaN(d.getTime()))
+        .sort((a, b) => b - a);
+
+      if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
+        alert("Fill it out properly, bro.");
+        return;
+      }
+
+      let avgCycle = cycleLength;
+      if (validDates.length > 1) {
+        let total = 0;
+        for (let i = 0; i < validDates.length - 1; i++) {
+          total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
+        }
+        avgCycle = Math.round(total / (validDates.length - 1));
+      }
+
+      const last = validDates[0];
+      const next = new Date(last);
+      next.setDate(next.getDate() + avgCycle);
+
       const today = new Date();
-      const start = new Date(startDate);
-      const daysSince = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
+      const timeDiff = next - today;
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-      if (daysSince < periodLength) return "Pain Zone";
-      else if (daysSince < 14) return "Recharge Phase";
-      else if (daysSince === 14) return "Peak Mode";
-      else return "Trap Zone";
+      const entry = {
+        name,
+        lastPeriod: last.toISOString().split('T')[0],
+        cycleLength: avgCycle,
+        periodLength,
+        predictedNext: next.toISOString().split('T')[0],
+        created: new Date().toISOString()
+      };
+      let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+      history.push(entry);
+      localStorage.setItem("brocycleHistory", JSON.stringify(history));
+
+      const params = new URLSearchParams({
+        name: name,
+        next: next.toISOString(),
+        days: daysRemaining,
+        length: avgCycle,
+        period: periodLength
+      });
+
+      window.location.href = `results.html?${params.toString()}`;
     }
 
-    if (name && next && days && length && period) {
-      const predicted = formatDateDisplay(next);
-      const phase = getPhase(length, period, new Date(next) - length * 24 * 60 * 60 * 1000);
-      document.getElementById("results").innerHTML = `
-        <p><strong>${name}'s</strong> cycle is around <strong>${length} days</strong> long.</p>
-        <p>Her period usually lasts <strong>${period} days</strong>.</p>
-        <p>Based on your last entry, her next period might start around <strong>${predicted}</strong>.</p>
-        <p>Countdown: <strong>${days} day(s)</strong> to go. You know what to do.</p>
-        <p>Today = <strong>${phase}</strong></p>
-      `;
-      document.getElementById("phaseLink").href = `phases.html?length=${length}&period=${period}`;
-    } else {
-      document.getElementById("results").innerText = "Missing info. Go back and fill it in, bro.";
+    function addKnownDate() {
+      const container = document.getElementById("entries");
+      const row = document.createElement("div");
+      row.className = "date-entry";
+      row.innerHTML = `<input type="text" placeholder="dd.mm.yy">`;
+      container.appendChild(row);
     }
+
+    const tips = [
+      "Don't ask 'are you on your period?' Just be useful.",
+      "Surprise her with snacks or a heating pad.",
+      "Mood shifts? Stay calm and ride it out.",
+      "Sometimes silence is the win.",
+      "Support means knowing when to shut up."
+    ];
+    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
 </html>
