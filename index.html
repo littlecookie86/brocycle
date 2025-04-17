@@ -66,6 +66,33 @@
     .entry-group input {
       flex: 1;
     }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #003366;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px black;
+      max-width: 90%;
+      z-index: 1000;
+    }
+    .popup h3 {
+      margin-top: 0;
+      color: #7FDBFF;
+    }
+    .popup button {
+      margin-top: 10px;
+      background-color: #FF4136;
+    }
+    .corner-note {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 12px;
+      color: #AAAAAA;
+    }
   </style>
 </head>
 <body>
@@ -101,6 +128,8 @@
     <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
     <a class="graph-link" href="history.html">View History</a>
   </div>
+
+  <div class="corner-note">initial version of BroCycle website</div>
 
   <script>
     function goToResults() {
@@ -162,7 +191,7 @@
       const dates = Array.from(rows)
         .map(input => new Date(input.value))
         .filter(date => !isNaN(date.getTime()))
-        .sort((a, b) => b - a); // most recent first
+        .sort((a, b) => b - a);
 
       if (dates.length < 2) {
         alert("Enter at least 2 valid dates, bro.");
@@ -175,11 +204,33 @@
         totalCycle += diff;
       }
       const avgCycle = Math.round(totalCycle / (dates.length - 1));
+      const periodLength = 5;
+      const start = dates[0];
+      const predictions = [];
+      for (let i = 0; i < 3; i++) {
+        const next = new Date(start);
+        next.setDate(next.getDate() + avgCycle * i);
+        predictions.push(`Period ${i + 1}: ${next.toDateString()}`);
+      }
 
-      document.getElementById("cycleLength").value = avgCycle;
-      document.getElementById("lastPeriod").value = dates[0].toISOString().split('T')[0];
+      const today = new Date();
+      const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % avgCycle;
+      let phase = "";
+      if (diffDays < periodLength) phase = "Pain Zone";
+      else if (diffDays < 14) phase = "Recharge Phase";
+      else if (diffDays === 14) phase = "Peak Mode";
+      else phase = "Trap Zone";
 
-      alert(`Average cycle length: ${avgCycle} days based on your entries.`);
+      const div = document.createElement("div");
+      div.className = "popup";
+      div.innerHTML = `
+        <h3>BroCycle Estimate</h3>
+        <p>Avg cycle: ${avgCycle} days</p>
+        ${predictions.map(p => `<p>${p}</p>`).join('')}
+        <p>Today = ${phase}</p>
+        <button onclick="this.parentElement.remove()">Close</button>
+      `;
+      document.body.appendChild(div);
     }
 
     const tips = [
