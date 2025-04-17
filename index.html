@@ -150,7 +150,8 @@
       const cycleLength = parseInt(document.getElementById("cycleLength").value);
       const periodLength = parseInt(document.getElementById("periodLength").value);
 
-      let allDates = [parseDDMMYY(document.getElementById("lastPeriod").value)];
+      const lastInput = document.getElementById("lastPeriod").value;
+      let allDates = [parseDDMMYY(lastInput)];
 
       const rows = document.querySelectorAll(".date-entry input");
       rows.forEach(input => {
@@ -186,12 +187,13 @@
 
       const entry = {
         name,
-        lastPeriod: last.toISOString().split('T')[0],
+        lastPeriod: lastInput,
         cycleLength: avgCycle,
         periodLength,
-        predictedNext: next.toISOString().split('T')[0],
-        created: new Date().toISOString()
+        predictedNext: formatDateDisplay(next),
+        created: formatDateDisplay(today)
       };
+
       let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
       history.push(entry);
       localStorage.setItem("brocycleHistory", JSON.stringify(history));
@@ -201,7 +203,8 @@
         next: next.toISOString(),
         days: daysRemaining,
         length: avgCycle,
-        period: periodLength
+        period: periodLength,
+        last: last.toISOString().split('T')[0]
       });
 
       window.location.href = `results.html?${params.toString()}`;
