@@ -36,7 +36,7 @@
       border: none;
       cursor: pointer;
     }
-    .tip, .info {
+    .tip {
       margin-top: 20px;
       background-color: #003366;
       padding: 15px;
@@ -51,47 +51,30 @@
       text-decoration: none;
       border-radius: 6px;
     }
-    .advanced-section {
-      display: none;
-      background-color: #002244;
-      padding: 10px;
-      margin-top: 20px;
-      border-radius: 6px;
-    }
-    .entry-group {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .entry-group input {
-      flex: 1;
-    }
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #003366;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px black;
-      max-width: 90%;
-      z-index: 1000;
-    }
-    .popup h3 {
-      margin-top: 0;
-      color: #7FDBFF;
-    }
-    .popup button {
-      margin-top: 10px;
-      background-color: #FF4136;
-    }
     .corner-note {
       position: fixed;
       bottom: 10px;
       left: 10px;
       font-size: 12px;
       color: #AAAAAA;
+    }
+    .known-periods {
+      background-color: #002244;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+    }
+    .known-periods label {
+      margin-bottom: 4px;
+      display: block;
+    }
+    .date-entry {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .date-entry input {
+      flex: 1;
     }
   </style>
 </head>
@@ -107,6 +90,12 @@
     <label>Date of last period:</label>
     <input type="date" id="lastPeriod" />
 
+    <div class="known-periods" id="advanced">
+      <label>Known periods:</label>
+      <div id="entries"></div>
+      <button onclick="addKnownDate()">+ Add Another Date</button>
+    </div>
+
     <label>Average cycle length (days):</label>
     <input type="number" id="cycleLength" placeholder="e.g. 28" />
 
@@ -114,15 +103,6 @@
     <input type="number" id="periodLength" placeholder="e.g. 5" />
 
     <button onclick="goToResults()">Predict Next Period</button>
-    <button onclick="toggleAdvanced()">Use Advanced Input</button>
-
-    <div class="advanced-section" id="advanced">
-      <h3>Advanced Input</h3>
-      <p>Enter multiple period start dates (most recent first):</p>
-      <div id="entries"></div>
-      <button onclick="addAdvancedEntry()">+ Add Another Date</button>
-      <button onclick="calculateFromAdvanced()">Estimate from Dates</button>
-    </div>
 
     <div class="tip" id="broTip"></div>
     <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
@@ -132,19 +112,47 @@
   <div class="corner-note">initial version of BroCycle website</div>
 
   <script>
+    function formatDateDisplay(date) {
+      const d = new Date(date);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear()).slice(-2);
+      return `${day}.${month}.${year}`;
+    }
+
     function goToResults() {
       const name = document.getElementById("partnerName").value;
-      const last = new Date(document.getElementById("lastPeriod").value);
       const cycleLength = parseInt(document.getElementById("cycleLength").value);
       const periodLength = parseInt(document.getElementById("periodLength").value);
+      let allDates = [document.getElementById("lastPeriod").value];
 
-      if (!name || isNaN(last.getTime()) || isNaN(cycleLength) || isNaN(periodLength)) {
+      const rows = document.querySelectorAll(".date-entry input");
+      rows.forEach(input => {
+        if (input.value) allDates.push(input.value);
+      });
+
+      const validDates = allDates
+        .map(val => new Date(val))
+        .filter(d => !isNaN(d.getTime()))
+        .sort((a, b) => b - a);
+
+      if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
         alert("Fill it out properly, bro.");
         return;
       }
 
+      let avgCycle = cycleLength;
+      if (validDates.length > 1) {
+        let total = 0;
+        for (let i = 0; i < validDates.length - 1; i++) {
+          total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
+        }
+        avgCycle = Math.round(total / (validDates.length - 1));
+      }
+
+      const last = validDates[0];
       const next = new Date(last);
-      next.setDate(next.getDate() + cycleLength);
+      next.setDate(next.getDate() + avgCycle);
 
       const today = new Date();
       const timeDiff = next - today;
@@ -153,7 +161,7 @@
       const entry = {
         name,
         lastPeriod: last.toISOString().split('T')[0],
-        cycleLength,
+        cycleLength: avgCycle,
         periodLength,
         predictedNext: next.toISOString().split('T')[0],
         created: new Date().toISOString()
@@ -166,71 +174,19 @@
         name: name,
         next: next.toISOString(),
         days: daysRemaining,
-        length: cycleLength,
+        length: avgCycle,
         period: periodLength
       });
 
       window.location.href = `results.html?${params.toString()}`;
     }
 
-    function toggleAdvanced() {
-      const adv = document.getElementById("advanced");
-      adv.style.display = adv.style.display === "block" ? "none" : "block";
-    }
-
-    function addAdvancedEntry() {
-      const entriesDiv = document.getElementById("entries");
-      const group = document.createElement("div");
-      group.className = "entry-group";
-      group.innerHTML = `<input type="date" placeholder="Period Start Date" />`;
-      entriesDiv.appendChild(group);
-    }
-
-    function calculateFromAdvanced() {
-      const rows = document.querySelectorAll(".entry-group input");
-      const dates = Array.from(rows)
-        .map(input => new Date(input.value))
-        .filter(date => !isNaN(date.getTime()))
-        .sort((a, b) => b - a);
-
-      if (dates.length < 2) {
-        alert("Enter at least 2 valid dates, bro.");
-        return;
-      }
-
-      let totalCycle = 0;
-      for (let i = 0; i < dates.length - 1; i++) {
-        const diff = (dates[i] - dates[i + 1]) / (1000 * 60 * 60 * 24);
-        totalCycle += diff;
-      }
-      const avgCycle = Math.round(totalCycle / (dates.length - 1));
-      const periodLength = 5;
-      const start = dates[0];
-      const predictions = [];
-      for (let i = 0; i < 3; i++) {
-        const next = new Date(start);
-        next.setDate(next.getDate() + avgCycle * i);
-        predictions.push(`Period ${i + 1}: ${next.toDateString()}`);
-      }
-
-      const today = new Date();
-      const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % avgCycle;
-      let phase = "";
-      if (diffDays < periodLength) phase = "Pain Zone";
-      else if (diffDays < 14) phase = "Recharge Phase";
-      else if (diffDays === 14) phase = "Peak Mode";
-      else phase = "Trap Zone";
-
-      const div = document.createElement("div");
-      div.className = "popup";
-      div.innerHTML = `
-        <h3>BroCycle Estimate</h3>
-        <p>Avg cycle: ${avgCycle} days</p>
-        ${predictions.map(p => `<p>${p}</p>`).join('')}
-        <p>Today = ${phase}</p>
-        <button onclick="this.parentElement.remove()">Close</button>
-      `;
-      document.body.appendChild(div);
+    function addKnownDate() {
+      const container = document.getElementById("entries");
+      const row = document.createElement("div");
+      row.className = "date-entry";
+      row.innerHTML = `<input type="date" placeholder="yyyy-mm-dd">`;
+      container.appendChild(row);
     }
 
     const tips = [
