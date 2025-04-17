@@ -1,126 +1,61 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BroCycle</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BroCycle - Results</title>
   <style>
     body {
+      background-color: #001f3f;
+      color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
-      background-color: #001f3f;
-      color: #ffffff;
     }
-    h1, h2 {
+    h1 {
       color: #7FDBFF;
     }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      max-width: 300px;
-      display: block;
-    }
-    button {
-      background-color: #0074D9;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .tip, .info {
-      margin-top: 20px;
+    .box {
       background-color: #003366;
       padding: 15px;
+      margin-top: 20px;
       border-radius: 8px;
-      max-width: 400px;
     }
-    a.graph-link {
+    a {
+      color: #7FDBFF;
       display: inline-block;
       margin-top: 20px;
-      padding: 10px 15px;
-      background-color: #0074D9;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>BroCycle</h1>
-  <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
-
-  <h2>Track Her Cycle</h2>
-  <label>Her name:</label>
-  <input type="text" id="partnerName" placeholder="e.g. Sarah" />
-
-  <label>Date of last period:</label>
-  <input type="date" id="lastPeriod" />
-
-  <label>Average cycle length (days):</label>
-  <input type="number" id="cycleLength" placeholder="e.g. 28" />
-
-  <label>Period duration (days):</label>
-  <input type="number" id="periodLength" placeholder="e.g. 5" />
-
-  <button onclick="goToResults()">Predict Next Period</button>
-
-  <div class="tip" id="broTip"></div>
-
-  <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
-  <a class="graph-link" href="history.html">View History</a>
+  <h1>BroCycle Results</h1>
+  <div class="box">
+    <div id="results"></div>
+  </div>
+  <a href="index.html">← Back to Tracker</a>
+  <a href="phases.html" id="phaseLink">View Cycle Phases</a>
 
   <script>
-    function goToResults() {
-      const name = document.getElementById("partnerName").value;
-      const last = new Date(document.getElementById("lastPeriod").value);
-      const cycleLength = parseInt(document.getElementById("cycleLength").value);
-      const periodLength = parseInt(document.getElementById("periodLength").value);
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name");
+    const next = params.get("next");
+    const days = params.get("days");
+    const length = params.get("length");
+    const period = params.get("period");
 
-      if (!name || isNaN(last.getTime()) || isNaN(cycleLength) || isNaN(periodLength)) {
-        alert("Fill it out properly, bro.");
-        return;
-      }
-
-      const next = new Date(last);
-      next.setDate(next.getDate() + cycleLength);
-
-      const today = new Date();
-      const timeDiff = next - today;
-      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-      // Save to localStorage history
-      const entry = {
-        name,
-        lastPeriod: last.toISOString().split('T')[0],
-        cycleLength,
-        periodLength,
-        predictedNext: next.toISOString().split('T')[0],
-        created: new Date().toISOString()
-      };
-      let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
-      history.push(entry);
-      localStorage.setItem("brocycleHistory", JSON.stringify(history));
-
-      const params = new URLSearchParams({
-        name: name,
-        next: next.toISOString(),
-        days: daysRemaining,
-        length: cycleLength,
-        period: periodLength
-      });
-
-      window.location.href = `results.html?${params.toString()}`;
+    if (name && next && days && length && period) {
+      document.getElementById("results").innerHTML = `
+        <p><strong>${name}'s</strong> cycle is around <strong>${length} days</strong> long.</p>
+        <p>Her period usually lasts <strong>${period} days</strong>.</p>
+        <p>Based on your last entry, her next period might start around <strong>${new Date(next).toDateString()}</strong>.</p>
+        <p>Countdown: <strong>${days} day(s)</strong> to go. You know what to do.</p>
+      `;
+      document.getElementById("phaseLink").href = `phases.html?length=${length}&period=${period}`;
+    } else {
+      document.getElementById("results").innerText = "Missing info. Go back and fill it in, bro.";
     }
-
-    const tips = [
-      "Don't ask 'are you on your period?' Just be useful.",
-      "Surprise her with snacks or a heating pad.",
-      "Mood shifts? Stay calm and ride it out.",
-      "Sometimes silence is the win.",
-      "Support means knowing when to shut up."
-    ];
-
-    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
 </html>
+
