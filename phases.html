@@ -20,11 +20,11 @@
       margin: 10px 0;
       border-radius: 8px;
     }
-    img {
-      max-width: 100%;
-      border: 2px solid #7FDBFF;
+    canvas {
+      background-color: white;
+      margin-top: 20px;
       border-radius: 10px;
-      margin-top: 10px;
+      max-width: 100%;
     }
     a {
       color: #7FDBFF;
@@ -33,6 +33,7 @@
       margin-top: 20px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>Cycle Phases Explained</h1>
@@ -43,7 +44,7 @@
   <div class="phase" id="phase3"></div>
   <div class="phase" id="phase4"></div>
 
-  <img src="https://www.nichd.nih.gov/sites/default/files/styles/full_width/public/2022-10/MenstrualCycle_0.png" alt="Cycle Graph">
+  <canvas id="cycleChart" width="400" height="150"></canvas>
 
   <a href="index.html">← Back to Tracker</a>
 
@@ -70,6 +71,36 @@
     document.getElementById("phase4").innerHTML = `
       <strong>4. Luteal Phase (Days ${lutealStart}–${length}):</strong><br>
       Progesterone rises. PMS may kick in. Cramps, cravings, and emotional waves possible.`;
+
+    const ctx = document.getElementById('cycleChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Menstrual', 'Follicular', 'Ovulation', 'Luteal'],
+        datasets: [{
+          label: 'Phase Duration (days)',
+          data: [5, ovulationDay - 5, 1, lutealLength],
+          backgroundColor: ['#FF4136', '#0074D9', '#2ECC40', '#FF851B']
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: 'black' } }
+        },
+        scales: {
+          x: {
+            ticks: { color: 'black' },
+            grid: { color: '#ccc' }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: 'black' },
+            grid: { color: '#ccc' }
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>
+
