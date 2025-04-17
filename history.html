@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BroCycle - History</title>
+  <title>BroCycle - Cycle Phases</title>
   <style>
     body {
       background-color: #001f3f;
@@ -14,67 +14,99 @@
     h1 {
       color: #7FDBFF;
     }
-    .entry {
+    .phase {
       background-color: #003366;
       padding: 15px;
-      margin-bottom: 10px;
+      margin: 10px 0;
       border-radius: 8px;
     }
-    button {
-      background-color: #FF4136;
-      color: white;
-      padding: 10px;
-      border: none;
+    .timeline {
+      display: flex;
+      margin-top: 20px;
+      height: 40px;
       border-radius: 6px;
-      cursor: pointer;
-      margin-top: 15px;
+      overflow: hidden;
+      max-width: 600px;
     }
+    .block {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: black;
+    }
+    .menstrual { background-color: #FF4136; }
+    .follicular { background-color: #0074D9; }
+    .ovulation { background-color: #2ECC40; }
+    .luteal { background-color: #FF851B; }
     a {
       color: #7FDBFF;
+      text-decoration: underline;
       display: inline-block;
       margin-top: 20px;
-      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>Cycle History</h1>
-  <div id="history"></div>
-  <button onclick="clearHistory()">Clear All</button>
+  <h1>Cycle Phases: What You're Dealing With</h1>
+  <p id="summary">Each phase hits different. Use this guide to stay sharp.</p>
+
+  <div class="phase" id="phase1"></div>
+  <div class="phase" id="phase2"></div>
+  <div class="phase" id="phase3"></div>
+  <div class="phase" id="phase4"></div>
+
+  <div class="timeline" id="timeline"></div>
+
   <a href="index.html">← Back to Tracker</a>
 
   <script>
-    function displayHistory() {
-      const container = document.getElementById("history");
-      const history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
-      if (history.length === 0) {
-        container.innerHTML = "No history yet, bro.";
-        return;
-      }
+    const params = new URLSearchParams(window.location.search);
+    const length = parseInt(params.get("length")) || 28;
+    const periodLength = parseInt(params.get("period")) || 5;
 
-      history.reverse().forEach(entry => {
-        const box = document.createElement("div");
-        box.className = "entry";
-        box.innerHTML = `
-          <strong>${entry.name}</strong><br>
-          Last Period: ${entry.lastPeriod}<br>
-          Cycle Length: ${entry.cycleLength} days<br>
-          Period Length: ${entry.periodLength} days<br>
-          Predicted Next: ${entry.predictedNext}<br>
-          Logged: ${new Date(entry.created).toLocaleDateString()}
-        `;
-        container.appendChild(box);
-      });
-    }
+    const ovulationDay = Math.round(length * 0.5);
+    const follicularLength = ovulationDay - periodLength;
+    const lutealLength = length - (ovulationDay + 1) + 1;
 
-    function clearHistory() {
-      if (confirm("You sure you want to wipe it all, bro?")) {
-        localStorage.removeItem("brocycleHistory");
-        location.reload();
-      }
-    }
+    document.getElementById("phase1").innerHTML = `
+      <strong>1. Pain Zone (Days 1–${periodLength}):</strong><br>
+      Low energy. Cramps. Mood swings. Be useful or disappear.`;
 
-    displayHistory();
+    document.getElementById("phase2").innerHTML = `
+      <strong>2. Chill Build-up (Days ${periodLength + 1}–${ovulationDay - 1}):</strong><br>
+      Energy rises. She's more upbeat. Good time to plan stuff.`;
+
+    document.getElementById("phase3").innerHTML = `
+      <strong>3. Green Light Zone (Day ${ovulationDay}):</strong><br>
+      She's confident, sharp, maybe even in the mood. Don’t screw it up.`;
+
+    document.getElementById("phase4").innerHTML = `
+      <strong>4. Landmine Phase (Days ${ovulationDay + 1}–${length}):</strong><br>
+      PMS incoming. Mood shifts, cravings. Be chill and bring snacks.`;
+
+    // Create dynamic timeline
+    const timeline = document.getElementById("timeline");
+
+    const total = periodLength + follicularLength + 1 + lutealLength;
+    const scale = 100 / total;
+
+    const blocks = [
+      { label: "Pain", len: periodLength, class: "menstrual" },
+      { label: "Build", len: follicularLength, class: "follicular" },
+      { label: "Ovul", len: 1, class: "ovulation" },
+      { label: "PMS", len: lutealLength, class: "luteal" }
+    ];
+
+    blocks.forEach(block => {
+      const div = document.createElement("div");
+      div.className = `block ${block.class}`;
+      div.style.width = `${block.len * scale}%`;
+      div.textContent = block.label;
+      timeline.appendChild(div);
+    });
   </script>
 </body>
 </html>
