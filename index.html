@@ -88,7 +88,7 @@
     <input type="text" id="partnerName" placeholder="e.g. Sarah" />
 
     <label>Date of last period:</label>
-    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" />
+    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" oninput="autoFormatDate(this)" />
 
     <div class="known-periods" id="advanced">
       <label>Known periods:</label>
@@ -121,6 +121,20 @@
       const fullYear = year + (year < 50 ? 2000 : 1900);
       const d = new Date(fullYear, month, day);
       return isNaN(d.getTime()) ? null : d;
+    }
+
+    function autoFormatDate(input) {
+      let value = input.value.replace(/[^0-9]/g, "");
+      if (value.length > 6) value = value.slice(0, 6);
+      let formatted = "";
+      if (value.length > 4) {
+        formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
+      } else if (value.length > 2) {
+        formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
+      } else {
+        formatted = value;
+      }
+      input.value = formatted;
     }
 
     function formatDateDisplay(date) {
@@ -197,7 +211,7 @@
       const container = document.getElementById("entries");
       const row = document.createElement("div");
       row.className = "date-entry";
-      row.innerHTML = `<input type="text" placeholder="dd.mm.yy">`;
+      row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
       container.appendChild(row);
     }
 
