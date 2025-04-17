@@ -6,10 +6,19 @@
   <title>BroCycle</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
       background-color: #001f3f;
       color: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
     }
     h1, h2 {
       color: #7FDBFF;
@@ -18,7 +27,7 @@
       padding: 10px;
       margin: 5px 0;
       width: 100%;
-      max-width: 300px;
+      max-width: 100%;
       display: block;
     }
     button {
@@ -32,7 +41,6 @@
       background-color: #003366;
       padding: 15px;
       border-radius: 8px;
-      max-width: 400px;
     }
     a.graph-link {
       display: inline-block;
@@ -43,31 +51,55 @@
       text-decoration: none;
       border-radius: 6px;
     }
+    .advanced-section {
+      display: none;
+      background-color: #002244;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
+    .entry-group {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .entry-group input {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
-  <h1>BroCycle</h1>
-  <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
+  <div class="container">
+    <h1>BroCycle</h1>
+    <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
 
-  <h2>Track Her Cycle</h2>
-  <label>Her name:</label>
-  <input type="text" id="partnerName" placeholder="e.g. Sarah" />
+    <h2>Track Her Cycle</h2>
+    <label>Her name:</label>
+    <input type="text" id="partnerName" placeholder="e.g. Sarah" />
 
-  <label>Date of last period:</label>
-  <input type="date" id="lastPeriod" />
+    <label>Date of last period:</label>
+    <input type="date" id="lastPeriod" />
 
-  <label>Average cycle length (days):</label>
-  <input type="number" id="cycleLength" placeholder="e.g. 28" />
+    <label>Average cycle length (days):</label>
+    <input type="number" id="cycleLength" placeholder="e.g. 28" />
 
-  <label>Period duration (days):</label>
-  <input type="number" id="periodLength" placeholder="e.g. 5" />
+    <label>Period duration (days):</label>
+    <input type="number" id="periodLength" placeholder="e.g. 5" />
 
-  <button onclick="goToResults()">Predict Next Period</button>
+    <button onclick="goToResults()">Predict Next Period</button>
+    <button onclick="toggleAdvanced()">Use Advanced Input</button>
 
-  <div class="tip" id="broTip"></div>
+    <div class="advanced-section" id="advanced">
+      <h3>Advanced Input</h3>
+      <div id="entries"></div>
+      <button onclick="addAdvancedEntry()">+ Add Another Entry</button>
+      <button onclick="calculateFromAdvanced()">Estimate from Entries</button>
+    </div>
 
-  <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
-  <a class="graph-link" href="history.html">View History</a>
+    <div class="tip" id="broTip"></div>
+    <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
+    <a class="graph-link" href="history.html">View History</a>
+  </div>
 
   <script>
     function goToResults() {
@@ -111,6 +143,42 @@
       window.location.href = `results.html?${params.toString()}`;
     }
 
+    function toggleAdvanced() {
+      const adv = document.getElementById("advanced");
+      adv.style.display = adv.style.display === "block" ? "none" : "block";
+    }
+
+    function addAdvancedEntry() {
+      const entriesDiv = document.getElementById("entries");
+      const group = document.createElement("div");
+      group.className = "entry-group";
+      group.innerHTML = `
+        <input type="date" placeholder="Date" />
+        <input type="number" placeholder="Cycle" />
+        <input type="number" placeholder="Period" />
+      `;
+      entriesDiv.appendChild(group);
+    }
+
+    function calculateFromAdvanced() {
+      const rows = document.querySelectorAll(".entry-group");
+      let cycleSum = 0, periodSum = 0, count = 0;
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const c = parseInt(inputs[1].value);
+        const p = parseInt(inputs[2].value);
+        if (!isNaN(c)) cycleSum += c;
+        if (!isNaN(p)) periodSum += p;
+        if (!isNaN(c) || !isNaN(p)) count++;
+      });
+      if (count === 0) {
+        alert("Add at least one complete row, bro.");
+        return;
+      }
+      document.getElementById("cycleLength").value = Math.round(cycleSum / count);
+      document.getElementById("periodLength").value = Math.round(periodSum / count);
+    }
+
     const tips = [
       "Don't ask 'are you on your period?' Just be useful.",
       "Surprise her with snacks or a heating pad.",
@@ -118,10 +186,10 @@
       "Sometimes silence is the win.",
       "Support means knowing when to shut up."
     ];
-
     document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
 </html>
+
 
 initial version of BroCycle website
