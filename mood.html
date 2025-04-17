@@ -86,30 +86,29 @@
     const today = new Date();
     const totalDays = 90;
     let currentMonth = "";
-    let monthSection = null;
+    let currentMap = null;
 
     for (let i = 0; i < totalDays; i++) {
-      const day = new Date();
-      day.setDate(today.getDate() + i);
+      const day = new Date(today);
+      day.setDate(day.getDate() + i);
       const label = day.getDate();
       const phase = getPhase(day, last, length, period);
 
       const monthName = getMonthName(day) + " " + day.getFullYear();
       if (monthName !== currentMonth) {
         currentMonth = monthName;
-        monthSection = document.createElement("div");
+        const monthSection = document.createElement("div");
         monthSection.className = "month-section";
 
         const title = document.createElement("div");
         title.className = "month-title";
         title.innerText = monthName;
 
-        const map = document.createElement("div");
-        map.className = "map";
-        map.id = `map-${i}`;
+        currentMap = document.createElement("div");
+        currentMap.className = "map";
 
         monthSection.appendChild(title);
-        monthSection.appendChild(map);
+        monthSection.appendChild(currentMap);
         container.appendChild(monthSection);
       }
 
@@ -117,7 +116,7 @@
       div.className = `day ${phase}`;
       div.title = day.toDateString();
       div.innerText = label;
-      document.getElementById(`map-${i}`).appendChild(div);
+      if (currentMap) currentMap.appendChild(div);
     }
   </script>
 </body>
