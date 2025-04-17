@@ -69,6 +69,10 @@
       else return "Trap Zone";
     }
 
+    function getMonthName(dateObj) {
+      return dateObj.toLocaleString('default', { month: 'long' });
+    }
+
     const params = new URLSearchParams(window.location.search);
     const name = params.get("name");
     const next = params.get("next");
@@ -77,14 +81,23 @@
     const period = parseInt(params.get("period"));
 
     if (name && next && days && length && period) {
-      const predicted = formatDateDisplay(next);
-      const lastStart = new Date(new Date(next).getTime() - (length * 24 * 60 * 60 * 1000));
+      const predicted = new Date(next);
+      const lastStart = new Date(predicted.getTime() - (length * 24 * 60 * 60 * 1000));
       const phase = getPhase(length, period, lastStart);
+
+      let multi = "";
+      let baseDate = new Date(lastStart);
+      for (let i = 1; i <= 3; i++) {
+        const nextDate = new Date(baseDate);
+        nextDate.setDate(nextDate.getDate() + length * i);
+        multi += `<p>${getMonthName(nextDate)}: ${formatDateDisplay(nextDate)}</p>`;
+      }
 
       document.getElementById("results").innerHTML = `
         <p><strong>${name}'s</strong> cycle is around <strong>${length} days</strong> long.</p>
         <p>Her period usually lasts <strong>${period} days</strong>.</p>
-        <p>Based on your last entry, her next period might start around <strong>${predicted}</strong>.</p>
+        <p>Based on your last entry, her next period might start around <strong>${formatDateDisplay(predicted)}</strong>.</p>
+        ${multi}
         <p>Countdown: <strong>${days} day(s)</strong> to go. You know what to do.</p>
         <p>Today = <strong>${phase}</strong></p>
       `;
