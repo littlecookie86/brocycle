@@ -8,11 +8,11 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background-color: #fefefe;
-      color: #333;
+      background-color: #001f3f;
+      color: #ffffff;
     }
     h1, h2 {
-      color: #c0392b;
+      color: #7FDBFF;
     }
     input, button {
       padding: 10px;
@@ -21,12 +21,27 @@
       max-width: 300px;
       display: block;
     }
-    .tip {
+    button {
+      background-color: #0074D9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .tip, .info {
       margin-top: 20px;
-      background-color: #ffe6e6;
+      background-color: #003366;
       padding: 15px;
       border-radius: 8px;
       max-width: 400px;
+    }
+    a.graph-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #0074D9;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -46,16 +61,19 @@
 
   <button onclick="predictCycle()">Predict Next Period</button>
 
-  <div id="result"></div>
+  <div id="result" class="info"></div>
+  <div id="countdown" class="info"></div>
 
   <div class="tip" id="broTip"></div>
+
+  <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
 
   <script>
     function predictCycle() {
       const name = document.getElementById("partnerName").value;
       const last = new Date(document.getElementById("lastPeriod").value);
       const length = parseInt(document.getElementById("cycleLength").value);
-      
+
       if (!name || isNaN(last.getTime()) || isNaN(length)) {
         alert("Please fill out all fields, bro.");
         return;
@@ -64,8 +82,15 @@
       const next = new Date(last);
       next.setDate(next.getDate() + length);
 
+      const today = new Date();
+      const timeDiff = next - today;
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
       document.getElementById("result").innerHTML =
-        `<strong>${name}'s</strong> next period might start around <strong>${next.toDateString()}</strong>. Get the snacks ready.`;
+        `<strong>${name}'s</strong> cycle is approximately <strong>${length} days</strong>. Next period might start around <strong>${next.toDateString()}</strong>.`;
+
+      document.getElementById("countdown").innerHTML =
+        `Countdown: <strong>${daysRemaining}</strong> day(s) until expected start.`;
     }
 
     const tips = [
@@ -75,7 +100,7 @@
       "Sometimes silence is the best gift.",
       "Don't be a hero. Just offer a heating pad."
     ];
-    
+
     document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
