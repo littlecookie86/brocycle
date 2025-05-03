@@ -79,11 +79,30 @@
     .date-entry input {
       flex: 1;
     }
+    #authBox {
+      background-color: #002244;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+    }
+    #authStatus {
+      font-size: 14px;
+      color: #FFDC00;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>BroCycle</h1>
+    <div id="authBox">
+      <h2>Login</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="logIn()">Log In</button>
+      <button onclick="signUp()">Sign Up</button>
+      <p id="authStatus"></p>
+    </div>
+
     <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
 
     <h2>Track Her Cycle</h2>
@@ -128,6 +147,30 @@
   </script>
 
   <script>
+    function logIn() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(() => {
+          document.getElementById("authStatus").innerText = "Logged in, bro.";
+        })
+        .catch(error => {
+          document.getElementById("authStatus").innerText = error.message;
+        });
+    }
+
+    function signUp() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
+        })
+        .catch(error => {
+          document.getElementById("authStatus").innerText = error.message;
+        });
+    }
+
     function parseDDMMYY(input) {
       const parts = input.split(".");
       if (parts.length !== 3) return null;
@@ -245,6 +288,7 @@
   </script>
 </body>
 </html>
+
 
 
 
