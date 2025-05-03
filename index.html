@@ -150,6 +150,7 @@
     appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
   };
   firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
   function togglePassword() {
     const pass = document.getElementById("password");
@@ -159,7 +160,7 @@
   function logIn() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    firebase.auth().signInWithEmailAndPassword(email, password)
+    auth.signInWithEmailAndPassword(email, password)
       .then(() => {
         document.getElementById("authStatus").innerText = "Logged in, bro.";
       })
@@ -171,7 +172,7 @@
   function signUp() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    firebase.auth().createUserWithEmailAndPassword(email, password)
+    auth.createUserWithEmailAndPassword(email, password)
       .then(() => {
         document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
       })
