@@ -153,10 +153,18 @@
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
 
-      document.getElementById("showPassword").addEventListener("change", function () {
+      // Password toggle fix (robust for weird load timing)
+      function setupPasswordToggle() {
+        const checkbox = document.getElementById("showPassword");
         const pass = document.getElementById("password");
-        pass.type = this.checked ? "text" : "password";
-      });
+        if (checkbox && pass) {
+          checkbox.addEventListener("change", () => {
+            pass.type = checkbox.checked ? "text" : "password";
+          });
+        }
+      }
+      setupPasswordToggle();
+      setTimeout(setupPasswordToggle, 100); // extra safety
 
       document.getElementById("signUpBtn").addEventListener("click", function () {
         const email = document.getElementById("email").value;
@@ -308,6 +316,7 @@
   </script>
 </body>
 </html>
+
 
 
 
