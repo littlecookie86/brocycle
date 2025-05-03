@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroCycle</title>
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
@@ -141,182 +140,191 @@
   <div class="corner-note">initial version of BroCycle website</div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
-      authDomain: "brocycle-2abf1.firebaseapp.com",
-      projectId: "brocycle-2abf1",
-      storageBucket: "brocycle-2abf1.appspot.com",
-      messagingSenderId: "703320336927",
-      appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    function togglePassword() {
-      const pass = document.getElementById("password");
-      const isChecked = document.querySelector('input[type="checkbox"]').checked;
-      pass.type = isChecked ? "text" : "password";
-    }
-
-    function logIn() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          document.getElementById("authStatus").innerText = "Logged in, bro.";
-          console.log("Logged in:", userCredential.user);
-        })
-        .catch((error) => {
-          document.getElementById("authStatus").innerText = error.message;
-          console.error("Login error:", error);
-        });
-    }
-
-    function signUp() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
-          console.log("Signed up:", userCredential.user);
-        })
-        .catch((error) => {
-          document.getElementById("authStatus").innerText = error.message;
-          console.error("Signup error:", error);
-        });
-    }
-
-    function parseDDMMYY(input) {
-      const parts = input.split(".");
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1;
-      const year = parseInt(parts[2]);
-      const fullYear = year + (year < 50 ? 2000 : 1900);
-      const d = new Date(fullYear, month, day);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    function autoFormatDate(input) {
-      let value = input.value.replace(/[^0-9]/g, "");
-      if (value.length > 6) value = value.slice(0, 6);
-      let formatted = "";
-      if (value.length > 4) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
-      } else if (value.length > 2) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
-      } else {
-        formatted = value;
-      }
-      input.value = formatted;
-    }
-
-    function formatDateDisplay(date) {
-      const d = new Date(date);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = String(d.getFullYear()).slice(-2);
-      return `${day}.${month}.${year}`;
-    }
-
-    function goToResults() {
-      const name = document.getElementById("partnerName").value;
-      const cycleLength = parseInt(document.getElementById("cycleLength").value);
-      const periodLength = parseInt(document.getElementById("periodLength").value);
-
-      const lastInput = document.getElementById("lastPeriod").value;
-      let allDates = [parseDDMMYY(lastInput)];
-
-      const rows = document.querySelectorAll(".date-entry input");
-      rows.forEach(input => {
-        const d = parseDDMMYY(input.value);
-        if (d) allDates.push(d);
-      });
-
-      const validDates = allDates
-        .filter(d => d && !isNaN(d.getTime()))
-        .sort((a, b) => b - a);
-
-      if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
-        alert("Fill it out properly, bro.");
-        return;
-      }
-
-      let avgCycle = cycleLength;
-      if (validDates.length > 1) {
-        let total = 0;
-        for (let i = 0; i < validDates.length - 1; i++) {
-          total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
-        }
-        avgCycle = Math.round(total / (validDates.length - 1));
-      }
-
-      const last = validDates[0];
-      const next = new Date(last);
-      next.setDate(next.getDate() + avgCycle);
-
-      const today = new Date();
-      const timeDiff = next - today;
-      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-      const entry = {
-        name,
-        lastPeriod: lastInput,
-        cycleLength: avgCycle,
-        periodLength,
-        predictedNext: formatDateDisplay(next),
-        created: formatDateDisplay(today)
+    window.onload = function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
+        authDomain: "brocycle-2abf1.firebaseapp.com",
+        projectId: "brocycle-2abf1",
+        storageBucket: "brocycle-2abf1.appspot.com",
+        messagingSenderId: "703320336927",
+        appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
       };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
 
-      const user = firebase.auth().currentUser;
-      if (user) {
-        const db = firebase.firestore();
-        db.collection("users").doc(user.uid).collection("history").add(entry)
-          .then(() => {
-            console.log("Entry saved to Firestore");
+      function togglePassword() {
+        const pass = document.getElementById("password");
+        const isChecked = document.querySelector('input[type="checkbox"]').checked;
+        pass.type = isChecked ? "text" : "password";
+      }
+      window.togglePassword = togglePassword;
+
+      function logIn() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        auth.signInWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            document.getElementById("authStatus").innerText = "Logged in, bro.";
+            console.log("Logged in:", userCredential.user);
           })
           .catch((error) => {
-            console.error("Error saving to Firestore:", error);
+            document.getElementById("authStatus").innerText = error.message;
+            console.error("Login error:", error);
           });
-      } else {
-        let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
-        history.push(entry);
-        localStorage.setItem("brocycleHistory", JSON.stringify(history));
+      }
+      window.logIn = logIn;
+
+      function signUp() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        auth.createUserWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
+            console.log("Signed up:", userCredential.user);
+          })
+          .catch((error) => {
+            document.getElementById("authStatus").innerText = error.message;
+            console.error("Signup error:", error);
+          });
+      }
+      window.signUp = signUp;
+
+      function parseDDMMYY(input) {
+        const parts = input.split(".");
+        if (parts.length !== 3) return null;
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const year = parseInt(parts[2]);
+        const fullYear = year + (year < 50 ? 2000 : 1900);
+        const d = new Date(fullYear, month, day);
+        return isNaN(d.getTime()) ? null : d;
       }
 
-      const params = new URLSearchParams({
-        name: name,
-        next: next.toISOString(),
-        days: daysRemaining,
-        length: avgCycle,
-        period: periodLength,
-        last: last.toISOString().split('T')[0]
-      });
+      function autoFormatDate(input) {
+        let value = input.value.replace(/[^0-9]/g, "");
+        if (value.length > 6) value = value.slice(0, 6);
+        let formatted = "";
+        if (value.length > 4) {
+          formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
+        } else if (value.length > 2) {
+          formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
+        } else {
+          formatted = value;
+        }
+        input.value = formatted;
+      }
+      window.autoFormatDate = autoFormatDate;
 
-      window.location.href = `results.html?${params.toString()}`;
-    }
+      function formatDateDisplay(date) {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}.${month}.${year}`;
+      }
 
-    function addKnownDate() {
-      const container = document.getElementById("entries");
-      const row = document.createElement("div");
-      row.className = "date-entry";
-      row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
-      container.appendChild(row);
-    }
+      function goToResults() {
+        const name = document.getElementById("partnerName").value;
+        const cycleLength = parseInt(document.getElementById("cycleLength").value);
+        const periodLength = parseInt(document.getElementById("periodLength").value);
 
-    const tips = [
-      "Don't ask 'are you on your period?' Just be useful.",
-      "Surprise her with snacks or a heating pad.",
-      "Mood shifts? Stay calm and ride it out.",
-      "Sometimes silence is the win.",
-      "Support means knowing when to shut up."
-    ];
-    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
+        const lastInput = document.getElementById("lastPeriod").value;
+        let allDates = [parseDDMMYY(lastInput)];
+
+        const rows = document.querySelectorAll(".date-entry input");
+        rows.forEach(input => {
+          const d = parseDDMMYY(input.value);
+          if (d) allDates.push(d);
+        });
+
+        const validDates = allDates
+          .filter(d => d && !isNaN(d.getTime()))
+          .sort((a, b) => b - a);
+
+        if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
+          alert("Fill it out properly, bro.");
+          return;
+        }
+
+        let avgCycle = cycleLength;
+        if (validDates.length > 1) {
+          let total = 0;
+          for (let i = 0; i < validDates.length - 1; i++) {
+            total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
+          }
+          avgCycle = Math.round(total / (validDates.length - 1));
+        }
+
+        const last = validDates[0];
+        const next = new Date(last);
+        next.setDate(next.getDate() + avgCycle);
+
+        const today = new Date();
+        const timeDiff = next - today;
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        const entry = {
+          name,
+          lastPeriod: lastInput,
+          cycleLength: avgCycle,
+          periodLength,
+          predictedNext: formatDateDisplay(next),
+          created: formatDateDisplay(today)
+        };
+
+        const user = auth.currentUser;
+        if (user) {
+          const db = firebase.firestore();
+          db.collection("users").doc(user.uid).collection("history").add(entry)
+            .then(() => {
+              console.log("Entry saved to Firestore");
+            })
+            .catch((error) => {
+              console.error("Error saving to Firestore:", error);
+            });
+        } else {
+          let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+          history.push(entry);
+          localStorage.setItem("brocycleHistory", JSON.stringify(history));
+        }
+
+        const params = new URLSearchParams({
+          name: name,
+          next: next.toISOString(),
+          days: daysRemaining,
+          length: avgCycle,
+          period: periodLength,
+          last: last.toISOString().split('T')[0]
+        });
+
+        window.location.href = `results.html?${params.toString()}`;
+      }
+      window.goToResults = goToResults;
+
+      function addKnownDate() {
+        const container = document.getElementById("entries");
+        const row = document.createElement("div");
+        row.className = "date-entry";
+        row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
+        container.appendChild(row);
+      }
+      window.addKnownDate = addKnownDate;
+
+      const tips = [
+        "Don't ask 'are you on your period?' Just be useful.",
+        "Surprise her with snacks or a heating pad.",
+        "Mood shifts? Stay calm and ride it out.",
+        "Sometimes silence is the win.",
+        "Support means knowing when to shut up."
+      ];
+      document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
+    };
   </script>
 </body>
 </html>
+
 
 
 
