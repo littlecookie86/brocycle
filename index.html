@@ -102,6 +102,9 @@
       <h2>Save your stuff between sessions</h2>
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
+      <label style="font-size: 14px;">
+        <input type="checkbox" onclick="togglePassword()" style="width: auto; margin-right: 5px;" /> Show password
+      </label>
       <button onclick="logIn()">Log In</button>
       <button onclick="signUp()">Sign Up</button>
       <p id="authStatus"></p>
@@ -147,6 +150,11 @@
     appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
   };
   firebase.initializeApp(firebaseConfig);
+
+  function togglePassword() {
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+  }
 
   function logIn() {
     const email = document.getElementById("email").value;
@@ -298,7 +306,7 @@
     "Support means knowing when to shut up."
   ];
   document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
-</script>
+  </script>
 </body>
 </html>
 
