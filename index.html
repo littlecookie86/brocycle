@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroCycle</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
   <style>
     body {
       margin: 0;
@@ -110,6 +113,19 @@
   </div>
 
   <div class="corner-note">initial version of BroCycle website</div>
+
+  <!-- Firebase config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
+      authDomain: "brocycle-2abf1.firebaseapp.com",
+      projectId: "brocycle-2abf1",
+      storageBucket: "brocycle-2abf1.firebasestorage.app",
+      messagingSenderId: "703320336927",
+      appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
 
   <script>
     function parseDDMMYY(input) {
@@ -229,5 +245,6 @@
   </script>
 </body>
 </html>
+
 
 
