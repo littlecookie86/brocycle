@@ -11,17 +11,17 @@
     body {
       margin: 0;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
       background-color: #001f3f;
       color: #ffffff;
       font-family: Arial, sans-serif;
+      padding: 20px;
     }
     .container {
       width: 100%;
-      max-width: 500px;
-      padding: 20px;
+      max-width: 600px;
     }
     h1, h2 {
       color: #7FDBFF;
@@ -30,14 +30,15 @@
       padding: 10px;
       margin: 5px 0;
       width: 100%;
-      max-width: 100%;
       display: block;
+      border-radius: 4px;
+      border: none;
     }
     button {
       background-color: #0074D9;
       color: white;
-      border: none;
       cursor: pointer;
+      margin-top: 10px;
     }
     .tip {
       margin-top: 20px;
@@ -81,9 +82,10 @@
     }
     #authBox {
       background-color: #002244;
-      padding: 10px;
-      margin-bottom: 20px;
-      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000033;
     }
     #authStatus {
       font-size: 14px;
@@ -94,8 +96,9 @@
 <body>
   <div class="container">
     <h1>BroCycle</h1>
+
     <div id="authBox">
-      <h2>Login</h2>
+      <h2>Save your stuff between sessions</h2>
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
       <button onclick="logIn()">Log In</button>
@@ -133,159 +136,156 @@
 
   <div class="corner-note">initial version of BroCycle website</div>
 
-  <!-- Firebase config -->
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
-      authDomain: "brocycle-2abf1.firebaseapp.com",
-      projectId: "brocycle-2abf1",
-      storageBucket: "brocycle-2abf1.firebasestorage.app",
-      messagingSenderId: "703320336927",
-      appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
+  const firebaseConfig = {
+    apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
+    authDomain: "brocycle-2abf1.firebaseapp.com",
+    projectId: "brocycle-2abf1",
+    storageBucket: "brocycle-2abf1.firebasestorage.app",
+    messagingSenderId: "703320336927",
+    appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  function logIn() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        document.getElementById("authStatus").innerText = "Logged in, bro.";
+      })
+      .catch(error => {
+        document.getElementById("authStatus").innerText = error.message;
+      });
+  }
+
+  function signUp() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(() => {
+        document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
+      })
+      .catch(error => {
+        document.getElementById("authStatus").innerText = error.message;
+      });
+  }
+
+  function parseDDMMYY(input) {
+    const parts = input.split(".");
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parseInt(parts[2]);
+    const fullYear = year + (year < 50 ? 2000 : 1900);
+    const d = new Date(fullYear, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function autoFormatDate(input) {
+    let value = input.value.replace(/[^0-9]/g, "");
+    if (value.length > 6) value = value.slice(0, 6);
+    let formatted = "";
+    if (value.length > 4) {
+      formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
+    } else if (value.length > 2) {
+      formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
+    } else {
+      formatted = value;
+    }
+    input.value = formatted;
+  }
+
+  function formatDateDisplay(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}.${month}.${year}`;
+  }
+
+  function goToResults() {
+    const name = document.getElementById("partnerName").value;
+    const cycleLength = parseInt(document.getElementById("cycleLength").value);
+    const periodLength = parseInt(document.getElementById("periodLength").value);
+
+    const lastInput = document.getElementById("lastPeriod").value;
+    let allDates = [parseDDMMYY(lastInput)];
+
+    const rows = document.querySelectorAll(".date-entry input");
+    rows.forEach(input => {
+      const d = parseDDMMYY(input.value);
+      if (d) allDates.push(d);
+    });
+
+    const validDates = allDates
+      .filter(d => d && !isNaN(d.getTime()))
+      .sort((a, b) => b - a);
+
+    if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
+      alert("Fill it out properly, bro.");
+      return;
+    }
+
+    let avgCycle = cycleLength;
+    if (validDates.length > 1) {
+      let total = 0;
+      for (let i = 0; i < validDates.length - 1; i++) {
+        total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
+      }
+      avgCycle = Math.round(total / (validDates.length - 1));
+    }
+
+    const last = validDates[0];
+    const next = new Date(last);
+    next.setDate(next.getDate() + avgCycle);
+
+    const today = new Date();
+    const timeDiff = next - today;
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    const entry = {
+      name,
+      lastPeriod: lastInput,
+      cycleLength: avgCycle,
+      periodLength,
+      predictedNext: formatDateDisplay(next),
+      created: formatDateDisplay(today)
     };
-    firebase.initializeApp(firebaseConfig);
-  </script>
 
-  <script>
-    function logIn() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("authStatus").innerText = "Logged in, bro.";
-        })
-        .catch(error => {
-          document.getElementById("authStatus").innerText = error.message;
-        });
-    }
+    let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+    history.push(entry);
+    localStorage.setItem("brocycleHistory", JSON.stringify(history));
 
-    function signUp() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
-        })
-        .catch(error => {
-          document.getElementById("authStatus").innerText = error.message;
-        });
-    }
+    const params = new URLSearchParams({
+      name: name,
+      next: next.toISOString(),
+      days: daysRemaining,
+      length: avgCycle,
+      period: periodLength,
+      last: last.toISOString().split('T')[0]
+    });
 
-    function parseDDMMYY(input) {
-      const parts = input.split(".");
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1;
-      const year = parseInt(parts[2]);
-      const fullYear = year + (year < 50 ? 2000 : 1900);
-      const d = new Date(fullYear, month, day);
-      return isNaN(d.getTime()) ? null : d;
-    }
+    window.location.href = `results.html?${params.toString()}`;
+  }
 
-    function autoFormatDate(input) {
-      let value = input.value.replace(/[^0-9]/g, "");
-      if (value.length > 6) value = value.slice(0, 6);
-      let formatted = "";
-      if (value.length > 4) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
-      } else if (value.length > 2) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
-      } else {
-        formatted = value;
-      }
-      input.value = formatted;
-    }
+  function addKnownDate() {
+    const container = document.getElementById("entries");
+    const row = document.createElement("div");
+    row.className = "date-entry";
+    row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
+    container.appendChild(row);
+  }
 
-    function formatDateDisplay(date) {
-      const d = new Date(date);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = String(d.getFullYear()).slice(-2);
-      return `${day}.${month}.${year}`;
-    }
-
-    function goToResults() {
-      const name = document.getElementById("partnerName").value;
-      const cycleLength = parseInt(document.getElementById("cycleLength").value);
-      const periodLength = parseInt(document.getElementById("periodLength").value);
-
-      const lastInput = document.getElementById("lastPeriod").value;
-      let allDates = [parseDDMMYY(lastInput)];
-
-      const rows = document.querySelectorAll(".date-entry input");
-      rows.forEach(input => {
-        const d = parseDDMMYY(input.value);
-        if (d) allDates.push(d);
-      });
-
-      const validDates = allDates
-        .filter(d => d && !isNaN(d.getTime()))
-        .sort((a, b) => b - a);
-
-      if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
-        alert("Fill it out properly, bro.");
-        return;
-      }
-
-      let avgCycle = cycleLength;
-      if (validDates.length > 1) {
-        let total = 0;
-        for (let i = 0; i < validDates.length - 1; i++) {
-          total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
-        }
-        avgCycle = Math.round(total / (validDates.length - 1));
-      }
-
-      const last = validDates[0];
-      const next = new Date(last);
-      next.setDate(next.getDate() + avgCycle);
-
-      const today = new Date();
-      const timeDiff = next - today;
-      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-      const entry = {
-        name,
-        lastPeriod: lastInput,
-        cycleLength: avgCycle,
-        periodLength,
-        predictedNext: formatDateDisplay(next),
-        created: formatDateDisplay(today)
-      };
-
-      let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
-      history.push(entry);
-      localStorage.setItem("brocycleHistory", JSON.stringify(history));
-
-      const params = new URLSearchParams({
-        name: name,
-        next: next.toISOString(),
-        days: daysRemaining,
-        length: avgCycle,
-        period: periodLength,
-        last: last.toISOString().split('T')[0]
-      });
-
-      window.location.href = `results.html?${params.toString()}`;
-    }
-
-    function addKnownDate() {
-      const container = document.getElementById("entries");
-      const row = document.createElement("div");
-      row.className = "date-entry";
-      row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
-      container.appendChild(row);
-    }
-
-    const tips = [
-      "Don't ask 'are you on your period?' Just be useful.",
-      "Surprise her with snacks or a heating pad.",
-      "Mood shifts? Stay calm and ride it out.",
-      "Sometimes silence is the win.",
-      "Support means knowing when to shut up."
-    ];
-    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
-  </script>
+  const tips = [
+    "Don't ask 'are you on your period?' Just be useful.",
+    "Surprise her with snacks or a heating pad.",
+    "Mood shifts? Stay calm and ride it out.",
+    "Sometimes silence is the win.",
+    "Support means knowing when to shut up."
+  ];
+  document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
+</script>
 </body>
 </html>
 
