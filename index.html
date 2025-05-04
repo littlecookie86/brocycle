@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroCycle</title>
-
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
   <style>
     body {
       margin: 0;
@@ -18,7 +16,7 @@
       justify-content: center;
       min-height: 100vh;
       background-color: #001f3f;
-      color: white;
+      color: #ffffff;
       font-family: Arial, sans-serif;
       padding: 20px;
     }
@@ -105,26 +103,26 @@
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
       <label style="font-size: 14px;">
-        <input type="checkbox" id="showPassword" style="width: auto; margin-right: 5px;" /> Show password
+        <input type="checkbox" onclick="togglePassword()" style="width: auto; margin-right: 5px;" /> Show password
       </label>
-      <button id="logInBtn">Log In</button>
-      <button id="signUpBtn">Sign Up</button>
+      <button onclick="logIn()">Log In</button>
+      <button onclick="signUp()">Sign Up</button>
       <p id="authStatus"></p>
     </div>
 
-    <p>Your bro-friendly period tracking assistant. Be a better and smarter boyfriend.</p>
+    <p>Your bro-friendly period tracking assistant. No fluff. Just facts and reminders to help you not screw up.</p>
 
     <h2>Track Her Cycle</h2>
     <label>Her name:</label>
     <input type="text" id="partnerName" placeholder="e.g. Sarah" />
 
     <label>Date of last period:</label>
-    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" />
+    <input type="text" id="lastPeriod" placeholder="dd.mm.yy" oninput="autoFormatDate(this)" />
 
     <div class="known-periods" id="advanced">
       <label>Known periods:</label>
       <div id="entries"></div>
-      <button id="addDateBtn">+ Add Another Date</button>
+      <button onclick="addKnownDate()">+ Add Another Date</button>
     </div>
 
     <label>Average cycle length (days):</label>
@@ -133,7 +131,7 @@
     <label>Period duration (days):</label>
     <input type="number" id="periodLength" placeholder="e.g. 5" />
 
-    <button id="predictBtn">Predict Next Period</button>
+    <button onclick="goToResults()">Predict Next Period</button>
 
     <div class="tip" id="broTip"></div>
     <a class="graph-link" href="phases.html">View Cycle Phases & Graph</a>
@@ -141,176 +139,177 @@
   </div>
 
   <div class="corner-note">initial version of BroCycle website</div>
+
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
-      authDomain: "brocycle-2abf1.firebaseapp.com",
-      projectId: "brocycle-2abf1",
-      storageBucket: "brocycle-2abf1.appspot.com",
-      messagingSenderId: "703320336927",
-      appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
+  const firebaseConfig = {
+    apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
+    authDomain: "brocycle-2abf1.firebaseapp.com",
+    projectId: "brocycle-2abf1",
+    storageBucket: "brocycle-2abf1.firebasestorage.app",
+    messagingSenderId: "703320336927",
+    appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
+  };
+  firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+  function togglePassword() {
+  const pass = document.getElementById("password");
+  const toggle = document.querySelector('input[type="checkbox"]');
+  pass.type = toggle.checked ? "text" : "password";
+}
+
+  function logIn() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(email, password).then((userCredential) => {
+      console.log("Logged in:", userCredential.user);
+      .then(() => {
+        document.getElementById("authStatus").innerText = "Logged in, bro.";
+      })
+      .catch(error => {
+        document.getElementById("authStatus").innerText = error.message;
+      });
+  }
+
+  function signUp() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
+      console.log("Signed up:", userCredential.user);
+      .then(() => {
+        document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
+      })
+      .catch(error => {
+        document.getElementById("authStatus").innerText = error.message;
+      });
+  }
+
+  function parseDDMMYY(input) {
+    const parts = input.split(".");
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parseInt(parts[2]);
+    const fullYear = year + (year < 50 ? 2000 : 1900);
+    const d = new Date(fullYear, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function autoFormatDate(input) {
+    let value = input.value.replace(/[^0-9]/g, "");
+    if (value.length > 6) value = value.slice(0, 6);
+    let formatted = "";
+    if (value.length > 4) {
+      formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
+    } else if (value.length > 2) {
+      formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
+    } else {
+      formatted = value;
+    }
+    input.value = formatted;
+  }
+
+  function formatDateDisplay(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}.${month}.${year}`;
+  }
+
+  function goToResults() {
+    const name = document.getElementById("partnerName").value;
+    const cycleLength = parseInt(document.getElementById("cycleLength").value);
+    const periodLength = parseInt(document.getElementById("periodLength").value);
+
+    const lastInput = document.getElementById("lastPeriod").value;
+    let allDates = [parseDDMMYY(lastInput)];
+
+    const rows = document.querySelectorAll(".date-entry input");
+    rows.forEach(input => {
+      const d = parseDDMMYY(input.value);
+      if (d) allDates.push(d);
+    });
+
+    const validDates = allDates
+      .filter(d => d && !isNaN(d.getTime()))
+      .sort((a, b) => b - a);
+
+    if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
+      alert("Fill it out properly, bro.");
+      return;
+    }
+
+    let avgCycle = cycleLength;
+    if (validDates.length > 1) {
+      let total = 0;
+      for (let i = 0; i < validDates.length - 1; i++) {
+        total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
+      }
+      avgCycle = Math.round(total / (validDates.length - 1));
+    }
+
+    const last = validDates[0];
+    const next = new Date(last);
+    next.setDate(next.getDate() + avgCycle);
+
+    const today = new Date();
+    const timeDiff = next - today;
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    const entry = {
+      name,
+      lastPeriod: lastInput,
+      cycleLength: avgCycle,
+      periodLength,
+      predictedNext: formatDateDisplay(next),
+      created: formatDateDisplay(today)
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    document.getElementById("showPassword").addEventListener("change", () => {
-      const pass = document.getElementById("password");
-      pass.type = document.getElementById("showPassword").checked ? "text" : "password";
-    });
-
-    document.getElementById("signUpBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.createUserWithEmailAndPassword(email, password)
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const db = firebase.firestore();
+      db.collection("users").doc(user.uid).collection("history").add(entry)
         .then(() => {
-          document.getElementById("authStatus").innerText = "Signed up, bro. You can now log in.";
+          console.log("Entry saved to Firestore");
         })
         .catch((error) => {
-          document.getElementById("authStatus").innerText = error.message;
+          console.error("Error saving to Firestore:", error);
         });
-    });
-
-    document.getElementById("logInBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("authStatus").innerText = "Logged in, bro.";
-        })
-        .catch((error) => {
-          document.getElementById("authStatus").innerText = error.message;
-        });
-    });
-
-    document.getElementById("addDateBtn").addEventListener("click", () => {
-      const container = document.getElementById("entries");
-      const row = document.createElement("div");
-      row.className = "date-entry";
-      row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
-      container.appendChild(row);
-    });
-
-    document.getElementById("lastPeriod").addEventListener("input", function () {
-      autoFormatDate(this);
-    });
-
-    function autoFormatDate(input) {
-      let value = input.value.replace(/[^0-9]/g, "");
-      if (value.length > 6) value = value.slice(0, 6);
-      let formatted = "";
-      if (value.length > 4) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2, 4)}.${value.slice(4)}`;
-      } else if (value.length > 2) {
-        formatted = `${value.slice(0, 2)}.${value.slice(2)}`;
-      } else {
-        formatted = value;
-      }
-      input.value = formatted;
+    } else {
+      let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+      history.push(entry);
+      localStorage.setItem("brocycleHistory", JSON.stringify(history));
     }
 
-    function parseDDMMYY(input) {
-      const parts = input.split(".");
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1;
-      const year = parseInt(parts[2]);
-      const fullYear = year + (year < 50 ? 2000 : 1900);
-      const d = new Date(fullYear, month, day);
-      return isNaN(d.getTime()) ? null : d;
-    }
+    const params = new URLSearchParams({
+      name: name,
+      next: next.toISOString(),
+      days: daysRemaining,
+      length: avgCycle,
+      period: periodLength,
+      last: last.toISOString().split('T')[0]
+    });
 
-    function formatDateDisplay(date) {
-      const d = new Date(date);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = String(d.getFullYear()).slice(-2);
-      return `${day}.${month}.${year}`;
-    }
-
-    auth.onAuthStateChanged((user) => {
-  const status = document.getElementById("authStatus");
-  if (user) {
-    status.innerText = "✅ Logged in as " + user.email;
-  } else {
-    status.innerText = "❌ Not logged in.";
+    window.location.href = `results.html?${params.toString()}`;
   }
-    auth.onAuthStateChanged((user) => {
-      document.getElementById("predictBtn").addEventListener("click", () => {
-        const name = document.getElementById("partnerName").value;
-        const cycleLength = parseInt(document.getElementById("cycleLength").value);
-        const periodLength = parseInt(document.getElementById("periodLength").value);
-        const lastInput = document.getElementById("lastPeriod").value;
-        let allDates = [parseDDMMYY(lastInput)];
-        const rows = document.querySelectorAll(".date-entry input");
-        rows.forEach(input => {
-          const d = parseDDMMYY(input.value);
-          if (d) allDates.push(d);
-        });
 
-        const validDates = allDates.filter(d => d && !isNaN(d.getTime())).sort((a, b) => b - a);
-        if (!name || isNaN(cycleLength) || isNaN(periodLength) || validDates.length === 0) {
-          alert("Fill it out properly, bro.");
-          return;
-        }
+  function addKnownDate() {
+    const container = document.getElementById("entries");
+    const row = document.createElement("div");
+    row.className = "date-entry";
+    row.innerHTML = `<input type="text" placeholder="dd.mm.yy" oninput="autoFormatDate(this)">`;
+    container.appendChild(row);
+  }
 
-        let avgCycle = cycleLength;
-        if (validDates.length > 1) {
-          let total = 0;
-          for (let i = 0; i < validDates.length - 1; i++) {
-            total += (validDates[i] - validDates[i + 1]) / (1000 * 60 * 60 * 24);
-          }
-          avgCycle = Math.round(total / (validDates.length - 1));
-        }
-
-        const last = validDates[0];
-        const next = new Date(last);
-        next.setDate(next.getDate() + avgCycle);
-
-        const today = new Date();
-        const daysRemaining = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
-
-        const entry = {
-          name,
-          lastPeriod: lastInput,
-          cycleLength: avgCycle,
-          periodLength,
-          predictedNext: formatDateDisplay(next),
-          created: formatDateDisplay(today)
-        };
-
-        if (user) {
-          db.collection("users").doc(user.uid).collection("history").add(entry)
-            .then(() => console.log("Saved to Firestore"))
-            .catch((error) => console.error("Error saving:", error));
-        } else {
-          let history = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
-          history.push(entry);
-          localStorage.setItem("brocycleHistory", JSON.stringify(history));
-        }
-
-        const params = new URLSearchParams({
-          name: name,
-          next: next.toISOString(),
-          days: daysRemaining,
-          length: avgCycle,
-          period: periodLength,
-          last: last.toISOString().split('T')[0]
-        });
-
-        window.location.href = `results.html?${params.toString()}`;
-      });
-    });
-
-    const tips = [
-      "Don't ask 'are you on your period?' Just be useful.",
-      "Surprise her with snacks or a heating pad.",
-      "Mood shifts? Stay calm and ride it out.",
-      "Sometimes silence is the win.",
-      "Support means knowing when to shut up."
-    ];
-    document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
+  const tips = [
+    "Don't ask 'are you on your period?' Just be useful.",
+    "Surprise her with snacks or a heating pad.",
+    "Mood shifts? Stay calm and ride it out.",
+    "Sometimes silence is the win.",
+    "Support means knowing when to shut up."
+  ];
+  document.getElementById("broTip").innerText = "Bro Tip: " + tips[Math.floor(Math.random() * tips.length)];
   </script>
 </body>
 </html>
