@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BroCycle History</title>
+  <title>BroCycle - History</title>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -20,44 +20,25 @@
     }
     h1 {
       color: #7FDBFF;
-      margin-bottom: 20px;
     }
-    .history-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    .card {
+    .entry {
       background-color: #002244;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #00000033;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
     }
-    .card p {
-      margin: 5px 0;
-    }
-    .corner-note {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      font-size: 12px;
-      color: #AAAAAA;
-    }
-    a.back-link {
+    a {
       display: inline-block;
       margin-top: 20px;
       color: #7FDBFF;
-      text-decoration: underline;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <h1>History</h1>
-  <div class="history-container" id="historyContainer">
-    <p>Loading history...</p>
-  </div>
-  <a href="index.html" class="back-link">Back to BroCycle</a>
-  <div class="corner-note">BroCycle history view</div>
+  <div id="historyList">Loading...</div>
+  <a href="index.html">Back to BroCycle</a>
 
   <script>
     const firebaseConfig = {
@@ -73,56 +54,50 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    function displayHistory(entries) {
-      const container = document.getElementById("historyContainer");
-      container.innerHTML = "";
-
-      if (!entries.length) {
-        container.innerHTML = "<p>No history entries found.</p>";
-        return;
-      }
-
-      entries.forEach(entry => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <p><strong>Name:</strong> ${entry.name}</p>
-          <p><strong>Last Period:</strong> ${entry.lastPeriod}</p>
-          <p><strong>Predicted Next:</strong> ${entry.predictedNext}</p>
-          <p><strong>Cycle Length:</strong> ${entry.cycleLength} days</p>
-          <p><strong>Period Length:</strong> ${entry.periodLength} days</p>
-          <p><small>Saved: ${entry.created}</small></p>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function loadLocalHistory() {
-      const raw = localStorage.getItem("brocycleHistory");
-      const entries = raw ? JSON.parse(raw) : [];
-      displayHistory(entries);
-    }
-
-    function loadFirestoreHistory(user) {
-      db.collection("users").doc(user.uid).collection("history").orderBy("created", "desc").get()
-        .then(snapshot => {
-          const entries = snapshot.docs.map(doc => doc.data());
-          displayHistory(entries);
-        })
-        .catch(err => {
-          console.error("Error loading Firestore history:", err);
-          document.getElementById("historyContainer").innerHTML = "<p>Error loading history.</p>";
-        });
+    function displayEntry(entry) {
+      return `
+        <div class="entry">
+          <strong>${entry.name}</strong><br>
+          Last period: ${entry.lastPeriod}<br>
+          Avg cycle: ${entry.cycleLength} days<br>
+          Period length: ${entry.periodLength} days<br>
+          Predicted next: ${entry.predictedNext}<br>
+          Created: ${entry.created}
+        </div>
+      `;
     }
 
     auth.onAuthStateChanged(user => {
+      const list = document.getElementById("historyList");
       if (user) {
-        loadFirestoreHistory(user);
+        db.collection("users").doc(user.uid).collection("history").orderBy("created", "desc").get()
+          .then(snapshot => {
+            if (snapshot.empty) {
+              list.innerHTML = "No history entries found.";
+              return;
+            }
+            let html = "";
+            snapshot.forEach(doc => {
+              html += displayEntry(doc.data());
+            });
+            list.innerHTML = html;
+          })
+          .catch(error => {
+            console.error("Error getting history:", error);
+            list.innerHTML = "Failed to load history.";
+          });
       } else {
-        loadLocalHistory();
+        const localData = JSON.parse(localStorage.getItem("brocycleHistory")) || [];
+        if (localData.length === 0) {
+          list.innerHTML = "No history entries found.";
+          return;
+        }
+        let html = localData.reverse().map(entry => displayEntry(entry)).join("");
+        list.innerHTML = html;
       }
     });
   </script>
 </body>
 </html>
+
 
