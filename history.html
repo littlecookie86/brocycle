@@ -4,146 +4,125 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroCycle History</title>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <style>
     body {
-      background-color: #001f3f;
-      color: white;
-      font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #001f3f;
+      color: white;
     }
     h1 {
       color: #7FDBFF;
-      text-align: center;
+      margin-bottom: 20px;
     }
-    .month {
-      margin-top: 30px;
-      background-color: #003366;
-      border-radius: 8px;
-      padding: 10px;
+    .history-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
-    .month h2 {
-      margin-top: 0;
-      color: #FFDC00;
-    }
-    .days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      margin-top: 10px;
-    }
-    .day {
-      padding: 10px;
-      border-radius: 4px;
-      text-align: center;
+    .card {
       background-color: #002244;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000033;
     }
-    .period {
-      background-color: #FF4136;
-      color: white;
+    .card p {
+      margin: 5px 0;
+    }
+    .corner-note {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 12px;
+      color: #AAAAAA;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #7FDBFF;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>BroCycle History</h1>
-  <div id="history"></div>
+  <h1>History</h1>
+  <div class="history-container" id="historyContainer">
+    <p>Loading history...</p>
+  </div>
+  <a href="index.html" class="back-link">Back to BroCycle</a>
+  <div class="corner-note">BroCycle history view</div>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCgrWUu86CccwX2trzjXRmmq-hmXs6bpZo",
       authDomain: "brocycle-2abf1.firebaseapp.com",
       projectId: "brocycle-2abf1",
-      storageBucket: "brocycle-2abf1.firebasestorage.app",
+      storageBucket: "brocycle-2abf1.appspot.com",
       messagingSenderId: "703320336927",
       appId: "1:703320336927:web:f9d9490a7dd15a450b832a"
     };
+
     firebase.initializeApp(firebaseConfig);
-
+    const auth = firebase.auth();
     const db = firebase.firestore();
-    const historyContainer = document.getElementById("history");
 
-    function formatMonthYear(date) {
-      return date.toLocaleString("default", { month: "long", year: "numeric" });
-    }
+    function displayHistory(entries) {
+      const container = document.getElementById("historyContainer");
+      container.innerHTML = "";
 
-    function buildCalendar(periods) {
-      const monthMap = {};
-      periods.forEach(entry => {
-        const lastDate = parseDate(entry.lastPeriod);
-        const periodLength = parseInt(entry.periodLength);
-        const cycleLength = parseInt(entry.cycleLength);
-
-        const thisCycle = new Date(lastDate);
-        while (thisCycle < new Date()) {
-          const monthKey = `${thisCycle.getFullYear()}-${thisCycle.getMonth()}`;
-          if (!monthMap[monthKey]) monthMap[monthKey] = [];
-
-          for (let i = 0; i < periodLength; i++) {
-            const day = new Date(thisCycle);
-            day.setDate(thisCycle.getDate() + i);
-            monthMap[monthKey].push(new Date(day));
-          }
-          thisCycle.setDate(thisCycle.getDate() + cycleLength);
-        }
-      });
-
-      for (const key in monthMap) {
-        const [year, month] = key.split("-").map(Number);
-        const monthDate = new Date(year, month);
-        const title = formatMonthYear(monthDate);
-
-        const div = document.createElement("div");
-        div.className = "month";
-        div.innerHTML = `<h2>${title}</h2><div class="days"></div>`;
-
-        const daysDiv = div.querySelector(".days");
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 1; i <= daysInMonth; i++) {
-          const d = new Date(year, month, i);
-          const cell = document.createElement("div");
-          cell.className = "day";
-          cell.textContent = i;
-          if (monthMap[key].some(p => p.getDate() === i && p.getMonth() === month)) {
-            cell.classList.add("period");
-          }
-          daysDiv.appendChild(cell);
-        }
-        historyContainer.appendChild(div);
-      }
-    }
-
-    function parseDate(str) {
-      const [dd, mm, yy] = str.split(".");
-      return new Date(`20${yy}`, mm - 1, dd);
-    }
-
-    function loadHistory(entries) {
-      if (!entries || entries.length === 0) {
-        historyContainer.innerHTML = "<p>No history found.</p>";
+      if (!entries.length) {
+        container.innerHTML = "<p>No history entries found.</p>";
         return;
       }
-      buildCalendar(entries);
+
+      entries.forEach(entry => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <p><strong>Name:</strong> ${entry.name}</p>
+          <p><strong>Last Period:</strong> ${entry.lastPeriod}</p>
+          <p><strong>Predicted Next:</strong> ${entry.predictedNext}</p>
+          <p><strong>Cycle Length:</strong> ${entry.cycleLength} days</p>
+          <p><strong>Period Length:</strong> ${entry.periodLength} days</p>
+          <p><small>Saved: ${entry.created}</small></p>
+        `;
+        container.appendChild(card);
+      });
     }
 
-    firebase.auth().onAuthStateChanged(user => {
+    function loadLocalHistory() {
+      const raw = localStorage.getItem("brocycleHistory");
+      const entries = raw ? JSON.parse(raw) : [];
+      displayHistory(entries);
+    }
+
+    function loadFirestoreHistory(user) {
+      db.collection("users").doc(user.uid).collection("history").orderBy("created", "desc").get()
+        .then(snapshot => {
+          const entries = snapshot.docs.map(doc => doc.data());
+          displayHistory(entries);
+        })
+        .catch(err => {
+          console.error("Error loading Firestore history:", err);
+          document.getElementById("historyContainer").innerHTML = "<p>Error loading history.</p>";
+        });
+    }
+
+    auth.onAuthStateChanged(user => {
       if (user) {
-        db.collection("users").doc(user.uid).collection("history").get()
-          .then(snapshot => {
-            const entries = snapshot.docs.map(doc => doc.data());
-            loadHistory(entries);
-          })
-          .catch(() => {
-            historyContainer.innerHTML = "<p>Error loading history.</p>";
-          });
+        loadFirestoreHistory(user);
       } else {
-        const local = JSON.parse(localStorage.getItem("brocycleHistory"));
-        loadHistory(local);
+        loadLocalHistory();
       }
     });
   </script>
 </body>
 </html>
+
