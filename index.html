@@ -230,6 +230,13 @@
     }
 
     auth.onAuthStateChanged((user) => {
+  const status = document.getElementById("authStatus");
+  if (user) {
+    status.innerText = "✅ Logged in as " + user.email;
+  } else {
+    status.innerText = "❌ Not logged in.";
+  }
+    auth.onAuthStateChanged((user) => {
       document.getElementById("predictBtn").addEventListener("click", () => {
         const name = document.getElementById("partnerName").value;
         const cycleLength = parseInt(document.getElementById("cycleLength").value);
